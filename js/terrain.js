@@ -43,8 +43,12 @@
 
     /** Downhill-ness of a slope in a given direction, used for the uphill fighting penalty. */
     build(scene, rng) {
+      // The bed runs well past the camera's own clamp: through clear water at the pan limit you
+      // could see the edge of the plane, and a battlefield with a visible rim is a diorama. Only
+      // the extent changed — the segment count is exactly what it was, because the per-vertex
+      // speckle below draws from the battle's RNG and one extra draw moves every seeded battle.
       const seg = 120;
-      const g = new THREE.PlaneGeometry(WIDTH + 90, DEPTH + 90, seg, seg);
+      const g = new THREE.PlaneGeometry(WIDTH + 230, DEPTH + 230, seg, seg);
       g.rotateX(-Math.PI / 2);
       const pos = g.attributes.position;
       const col = new Float32Array(pos.count * 3);

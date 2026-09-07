@@ -258,7 +258,7 @@
       this.scene = new THREE.Scene();
       // Water eats distance. The short, blue-green fog is doing most of the work of "this is under
       // the sea" before a single caustic is drawn.
-      this.scene.fog = new THREE.Fog(0x0c3241, 70, 390);
+      this.scene.fog = new THREE.Fog(0x0c3241, 55, 265);
 
       this.scene.add(this.sky());
       // Light from above and behind, the way it arrives underwater: a broad cold ambient off the

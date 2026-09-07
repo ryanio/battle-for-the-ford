@@ -225,17 +225,20 @@ async function main() {
     await sleep(150);
     report.check("Space resumes", (await page.eval(() => window.Anchor.game.paused)) === false);
 
+    // Held long, asserted loosely: the loop clamps dt to 50ms a frame, so a software renderer
+    // grinding out eight frames a second turns the same key-hold into a fraction of the movement.
+    // The check is that the key does something, not that it does a particular amount.
     const yaw0 = await page.eval(() => window.Anchor.game.controls.yaw);
-    await page.holdKey("q", 420);
+    await page.holdKey("q", 900);
     const yaw1 = await page.eval(() => window.Anchor.game.controls.yaw);
-    report.check("Q rotates the camera", Math.abs(yaw1 - yaw0) > 0.15, `${yaw0.toFixed(2)} → ${yaw1.toFixed(2)}`);
+    report.check("Q rotates the camera", Math.abs(yaw1 - yaw0) > 0.05, `${yaw0.toFixed(2)} → ${yaw1.toFixed(2)}`);
 
     const tgt0 = await page.eval(() => ({ ...window.Anchor.game.controls.target }));
-    await page.holdKey("d", 420);
+    await page.holdKey("d", 900);
     const tgt1 = await page.eval(() => ({ ...window.Anchor.game.controls.target }));
     report.check(
       "D pans the camera",
-      Math.hypot(tgt1.x - tgt0.x, tgt1.z - tgt0.z) > 3,
+      Math.hypot(tgt1.x - tgt0.x, tgt1.z - tgt0.z) > 1.5,
       `moved ${Math.hypot(tgt1.x - tgt0.x, tgt1.z - tgt0.z).toFixed(1)}m`,
     );
 

@@ -312,6 +312,12 @@
 
       this.buildSoldiers(game.rng);
       this.buildMeshes(game);
+      // Draw the block where it stands before the first tick. An InstancedMesh starts with identity
+      // matrices — forty bodies stacked at the world origin, under the seabed — and normally the
+      // first step() fixes that within a frame so nobody sees it. Start a battle while the game is
+      // paused, which the muster sheet and the QA harness both do, and the whole army is invisible
+      // until you unpause.
+      this.updateMeshes(0);
     }
 
     buildSoldiers(rng) {
@@ -331,6 +337,7 @@
           x,
           z,
           y: 0,
+          ground: this.game.terrain.heightAt(x, z),
           alive: true,
           phase: rng.range(0, Math.PI * 2),
           // A little permanent slop per man so ranks are never machine-straight.

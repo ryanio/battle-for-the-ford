@@ -665,6 +665,38 @@ async function main() {
       `${classic.filter((u) => u.t).length} formations with traits`,
     );
 
+    /*
+     * A battle built while the game is paused must be on screen immediately.
+     *
+     * An InstancedMesh starts with identity matrices — forty bodies stacked at the world origin,
+     * under the seabed. The first step() normally fixes that inside a frame, so it is invisible
+     * unless something rebuilds while paused, which the muster sheet does. A screenshot caught it;
+     * this catches it next time. The mesh's own instance matrix is what gets compared, because that
+     * is the thing that was wrong — unit.pos was right the whole time.
+     */
+    const drawn = await page.eval(() => {
+      const g = window.Anchor.game;
+      g.paused = true;
+      g.startBattle({ preset: "classic", seed: 424242 });
+      let worst = 0;
+      for (const u of g.units) {
+        const m = u.mesh.instanceMatrix.array;
+        for (let i = 0; i < u.soldiers.length; i++) {
+          const s = u.soldiers[i];
+          const dx = m[i * 16 + 12] - s.x;
+          const dz = m[i * 16 + 14] - s.z;
+          worst = Math.max(worst, Math.hypot(dx, dz));
+        }
+      }
+      g.paused = false;
+      return worst;
+    });
+    report.check(
+      "a battle built while paused is drawn where it stands",
+      drawn < 0.6,
+      `worst body is ${drawn.toFixed(2)}m from its drawn position`,
+    );
+
     // The sheet itself.
     await page.eval(() => {
       const g = window.Anchor.game;

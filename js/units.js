@@ -1,15 +1,33 @@
 /**
- * Units are formations, not men. Every order, every casualty and every morale check happens at the
- * level of the block; the forty soldiers inside it are chasing slots in a grid and are only ever
+ * Units are formations, not swimmers. Every order, every casualty and every morale check happens at
+ * the level of the block; the forty bodies inside it are chasing slots in a grid and are only ever
  * there to make the block legible. One InstancedMesh per unit draws all of them.
+ *
+ * A formation is also a collectible: it carries a name, a type, a rarity tier and a couple of
+ * traits, and it keeps a record of what it did in this battle. That is a framing device with real
+ * teeth — rarity buys traits, and traits change the numbers — but it is only a framing device. There
+ * are no wallets, no tokens and no network here, and there is not going to be.
  */
 ((A) => {
   /**
-   * Three roles, one triangle: swords beat spears in a brawl, spears beat horse, horse rides down
-   * swords. The numbers are deliberately loud — a rock-paper-scissors you cannot feel is decoration.
+   * Six roles. The first three are one clean triangle — swords beat spears in a brawl, spears beat
+   * horse, horse rides down swords — and the numbers are deliberately loud, because a
+   * rock-paper-scissors you cannot feel is decoration.
+   *
+   * The other three exist to bend that triangle rather than extend it:
+   *   knight  armoured rays. The charge is the best in the game and the brawl afterwards is the worst:
+   *           `fatigue` is theirs alone, and it bleeds their attack down to under half if they are
+   *           still locked in half a minute later. Everything else fights at full strength forever,
+   *           which is how the original three were tuned and is deliberately left alone.
+   *   ogre    six models, each hitting like a file. Almost nothing frightens them, and there
+   *           are so few bodies that contact — which is what scales damage — is hard to get.
+   *   zombie  numerous, feeble, and `fearless`: they never rout. Flanking still doubles the damage
+   *           and does nothing at all to their nerve, so the whole trick of the game stops working
+   *           and you have to kill every last one of them instead.
    */
   A.TYPES = {
     sword: {
+      label: "Reef Guard",
       men: 40,
       cols: 10,
       fileGap: 1.05,
@@ -22,8 +40,11 @@
       chargeDur: 3.0,
       steadiness: 2,
       reach: 1.5,
+      fatigue: 0,
+      blurb: "The line. Shell and blade, good at everything, breaks if you leave its flank open.",
     },
     spear: {
+      label: "Urchins",
       men: 40,
       cols: 10,
       fileGap: 1.12,
@@ -36,8 +57,11 @@
       chargeDur: 2.5,
       steadiness: 16,
       reach: 1.9,
+      fatigue: 0,
+      blurb: "A wall of spines. Anything that charges it head-on comes off the points.",
     },
     cavalry: {
+      label: "Rays",
       men: 24,
       cols: 8,
       fileGap: 1.8,
@@ -50,25 +74,181 @@
       chargeDur: 3.5,
       steadiness: 6,
       reach: 1.7,
+      fatigue: 0,
+      mounted: true,
+      blurb: "Fast enough to get behind anything. Use them on backs, never on spines.",
+    },
+    knight: {
+      label: "Nautili",
+      men: 16,
+      cols: 8,
+      fileGap: 2.05,
+      rankGap: 2.45,
+      speed: 7.2,
+      turn: 1.5,
+      attack: 1.75,
+      defense: 1.7,
+      charge: 5.2,
+      chargeDur: 3.0,
+      steadiness: 14,
+      reach: 1.8,
+      fatigue: 0.2,
+      fatigueMax: 1.25,
+      mounted: true,
+      blurb: "Shell-armoured rays. The charge shatters a line; half a minute later they are ordinary.",
+    },
+    ogre: {
+      label: "Leviathans",
+      men: 6,
+      cols: 3,
+      fileGap: 3.4,
+      rankGap: 3.4,
+      speed: 3.3,
+      turn: 0.9,
+      attack: 8.2,
+      defense: 1.4,
+      charge: 2.4,
+      chargeDur: 3.0,
+      steadiness: 10,
+      reach: 2.6,
+      fatigue: 0,
+      scale: 2.1,
+      blurb: "Six of them, each worth a file. Too few bodies to hold a frontage — they punch a hole.",
+    },
+    zombie: {
+      label: "Drowned",
+      men: 50,
+      cols: 10,
+      fileGap: 1.1,
+      rankGap: 1.25,
+      speed: 2.7,
+      turn: 0.7,
+      attack: 0.95,
+      defense: 0.55,
+      charge: 1.0,
+      chargeDur: 0.1,
+      steadiness: 0,
+      reach: 1.4,
+      fatigue: 0,
+      fearless: true,
+      scale: 0.95,
+      blurb: "They do not rout. Flanking them is worth damage and nothing else — kill every one.",
     },
   };
 
+  A.TYPE_ORDER = ["sword", "spear", "cavalry", "knight", "ogre", "zombie"];
+
   A.MATCHUP = {
-    sword: { sword: 1.0, spear: 1.35, cavalry: 0.85 },
-    spear: { sword: 0.8, spear: 1.0, cavalry: 2.1 },
-    cavalry: { sword: 1.3, spear: 0.55, cavalry: 1.0 },
+    sword: { sword: 1.0, spear: 1.35, cavalry: 0.85, knight: 0.7, ogre: 0.75, zombie: 1.6 },
+    spear: { sword: 0.8, spear: 1.0, cavalry: 2.1, knight: 2.3, ogre: 1.25, zombie: 1.1 },
+    cavalry: { sword: 1.3, spear: 0.55, cavalry: 1.0, knight: 0.8, ogre: 0.7, zombie: 1.3 },
+    knight: { sword: 1.45, spear: 0.5, cavalry: 1.25, knight: 1.0, ogre: 0.85, zombie: 1.7 },
+    ogre: { sword: 1.5, spear: 0.9, cavalry: 1.2, knight: 1.15, ogre: 1.0, zombie: 1.6 },
+    zombie: { sword: 1.0, spear: 0.85, cavalry: 1.15, knight: 0.95, ogre: 0.6, zombie: 1.0 },
+  };
+
+  /**
+   * The two names a card shows under a unit: what it eats, and what eats it.
+   *
+   * Read as an exchange rate rather than as a raw multiplier — how hard I hit you over how hard you
+   * hit me. A one-sided reading picks the wrong answer: swords have their biggest number against the
+   * undead, but the undead barely hit back at all, and the fight a sword player actually wants is
+   * the one against spears. The ratio recovers the triangle the game is built on.
+   */
+  A.matchupNotes = (type) => {
+    const trade = (t) => A.MATCHUP[type][t] / A.MATCHUP[t][type];
+    const others = A.TYPE_ORDER.filter((t) => t !== type);
+    const best = others.reduce((a, b) => (trade(b) > trade(a) ? b : a));
+    const worst = others.reduce((a, b) => (trade(b) < trade(a) ? b : a));
+    return { beats: A.TYPES[best].label, beatsType: best, losesTo: A.TYPES[worst].label, losesToType: worst };
+  };
+
+  /**
+   * Rarity and traits — the collectible layer.
+   *
+   * The rule that keeps this honest is that rarity has to buy something real. It does: a tier grants
+   * traits, and a trait is a live modifier on the same numbers everything else uses. Nothing here is
+   * cosmetic and nothing here is onchain — it is the *shape* of a collection (a roster, a tier, a
+   * trait sheet, a record of what this formation did) borrowed for a game, and that is the whole of
+   * it. There is no wallet, no mint and no network call anywhere in this repo.
+   *
+   * Common is the default, has no traits and no scalar, so the hand-placed scenario is numerically
+   * identical to the one that shipped before any of this existed.
+   */
+  A.RARITY = [
+    { key: "common", label: "Common", traits: 0, scale: 1.0, tint: "#93a8ad" },
+    { key: "uncommon", label: "Uncommon", traits: 1, scale: 1.04, tint: "#7fc9a8" },
+    { key: "rare", label: "Rare", traits: 2, scale: 1.08, tint: "#5fd4e4" },
+    { key: "epic", label: "Epic", traits: 3, scale: 1.12, tint: "#b58ce8" },
+    { key: "legendary", label: "Legendary", traits: 3, scale: 1.18, tint: "#ff8a6b" },
+  ];
+  A.rarityOf = (key) => A.RARITY.find((r) => r.key === key) || A.RARITY[0];
+
+  /** Every trait is one line and one number. If you cannot say what it does, it does not go in. */
+  A.TRAITS = {
+    braced: { label: "Braced", note: "+18% defence", apply: (d) => (d.defense *= 1.18) },
+    ravenous: { label: "Ravenous", note: "+16% attack", apply: (d) => (d.attack *= 1.16) },
+    swift: { label: "Swift", note: "+14% speed", apply: (d) => (d.speed *= 1.14) },
+    stoic: { label: "Stoic", note: "+9 steadiness", apply: (d) => (d.steadiness += 9) },
+    longreach: { label: "Long-Spined", note: "+0.4m reach", apply: (d) => (d.reach += 0.4) },
+    relentless: { label: "Relentless", note: "charge lasts 60% longer", apply: (d) => (d.chargeDur *= 1.6) },
+    tireless: { label: "Tireless", note: "never tires", apply: (d) => (d.fatigueMax = 0) },
+    deepdweller: {
+      label: "Deep-Dweller",
+      note: "ignores depth advantage",
+      apply: (d) => (d.ignoreGround = true),
+    },
+  };
+  A.TRAIT_ORDER = Object.keys(A.TRAITS);
+
+  /**
+   * Traits are rolled, not chosen, and they are rolled from the unit's own id and rarity so the same
+   * formation in the same battle always has the same sheet. A collectible whose traits shuffle every
+   * time you look at it is not a collectible.
+   */
+  A.rollTraits = (type, rarity, salt) => {
+    const tier = A.rarityOf(rarity);
+    if (!tier.traits) return [];
+    const rng = A.makeRng((salt * 2654435761 + A.TYPE_ORDER.indexOf(type) * 40503 + 7) >>> 0);
+    const pool = A.TRAIT_ORDER.filter((t) => !(t === "tireless" && !A.TYPES[type].fatigueMax));
+    const picked = [];
+    while (picked.length < Math.min(tier.traits, pool.length)) {
+      const t = pool[rng.int(pool.length)];
+      if (!picked.includes(t)) picked.push(t);
+    }
+    return picked;
+  };
+
+  /**
+   * A formation of `men` of this type, kept at roughly the depth-to-frontage ratio the type was
+   * drawn at. The builder lets you set the size of a formation, and a block of ninety men has to
+   * still look like that type rather than like a stripe.
+   */
+  A.formationShape = (type, men) => {
+    const base = A.TYPES[type];
+    const n = Math.max(1, Math.round(men));
+    const ratio = Math.round(base.men / base.cols) / base.cols; // rows per column, as drawn
+    const rows = Math.max(1, Math.round(Math.sqrt(n * ratio)));
+    const cols = Math.max(1, Math.ceil(n / rows));
+    return {
+      men: n,
+      rows,
+      cols,
+      halfWidth: (cols * base.fileGap) / 2,
+      halfDepth: (rows * base.rankGap) / 2,
+    };
   };
 
   // Scratch objects, built on first use: these files are classic scripts and run before the inline
   // module has had a chance to publish THREE.
-  let _m, _q, _p, _s, UP;
+  let _m, _q, _p, _s, _e;
   function scratch() {
     if (_m) return;
     _m = new THREE.Matrix4();
     _q = new THREE.Quaternion();
     _p = new THREE.Vector3();
     _s = new THREE.Vector3();
-    UP = new THREE.Vector3(0, 1, 0);
+    _e = new THREE.Euler(0, 0, 0, "YXZ");
   }
 
   let nextId = 1;
@@ -76,7 +256,17 @@
   A.Unit = class Unit {
     constructor(game, spec) {
       scratch();
-      const def = A.TYPES[spec.type];
+      // Each formation gets its own copy of the type: the army builder can set how many men are in
+      // it, and that changes the grid the block is drawn on.
+      const shape = A.formationShape(spec.type, spec.men || A.TYPES[spec.type].men);
+      const def = { ...A.TYPES[spec.type], ...shape };
+      this.rarity = spec.rarity || "common";
+      const tier = A.rarityOf(this.rarity);
+      this.traits = A.rollTraits(spec.type, this.rarity, spec.salt ?? nextId);
+      // Rarity is a small across-the-board scalar; the traits are where it is actually felt.
+      def.attack *= tier.scale;
+      def.defense *= tier.scale;
+      for (const t of this.traits) A.TRAITS[t].apply(def);
       this.game = game;
       this.id = nextId++;
       this.side = spec.side;
@@ -94,8 +284,14 @@
       this.chargeTimer = 0;
       this.routTimer = 0;
       this.selected = false;
+      // Time in contact bleeds a unit's attack away. Knights lose it fastest — that is the whole
+      // difference between a knight and a horseman once the charge is spent.
+      this.fatigue = 0;
+      // What this formation did today. A collectible with no provenance is a sticker.
+      this.record = { kills: 0, flanks: 0, rears: 0, broke: false, brokeEnemies: 0 };
 
       // Per-frame combat readings, refilled by combat.js.
+      this.hitCalls = []; // flank/rear announcements the HUD has not shown yet
       this.contactsOn = 0; // my men touching an enemy
       this.contactsAgainst = 0; // enemy men touching me
       this.frontShare = 1; // fraction of incoming contact landing on my front arc
@@ -116,6 +312,12 @@
 
       this.buildSoldiers(game.rng);
       this.buildMeshes(game);
+      // Draw the block where it stands before the first tick. An InstancedMesh starts with identity
+      // matrices — forty bodies stacked at the world origin, under the seabed — and normally the
+      // first step() fixes that within a frame so nobody sees it. Start a battle while the game is
+      // paused, which the muster sheet and the QA harness both do, and the whole army is invisible
+      // until you unpause.
+      this.updateMeshes(0);
     }
 
     buildSoldiers(rng) {
@@ -135,12 +337,13 @@
           x,
           z,
           y: 0,
+          ground: this.game.terrain.heightAt(x, z),
           alive: true,
           phase: rng.range(0, Math.PI * 2),
           // A little permanent slop per man so ranks are never machine-straight.
           wx: rng.gauss() * 0.14,
           wz: rng.gauss() * 0.14,
-          scale: rng.range(0.93, 1.07),
+          scale: rng.range(0.93, 1.07) * (d.scale || 1),
           pushX: 0,
           pushZ: 0,
           face: this.facing,
@@ -167,7 +370,7 @@
         new THREE.PlaneGeometry(shadeSize, shadeSize),
         new THREE.MeshBasicMaterial({
           map: game.blob,
-          color: 0x141a0e,
+          color: 0x03181e,
           transparent: true,
           opacity: 0.42,
           depthWrite: false,
@@ -187,7 +390,7 @@
       const w = this.halfWidth + 0.9;
       const d = this.halfDepth + 0.9;
       const mat = new THREE.MeshBasicMaterial({
-        color: 0xe0b566,
+        color: 0x7fe3f0,
         depthTest: false,
         transparent: true,
         opacity: 0.95,
@@ -204,13 +407,20 @@
       return g;
     }
 
-    /** Deliberately duller than the livery: the shield carries the army colour, the tunic the man. */
+    /**
+     * Deliberately duller than the livery: the shell carries the shoal's colour, the carapace the
+     * individual. Both sides are pushed warmer and lighter than they look on paper, because blue
+     * light and blue fog take a lot out of everything down here.
+     */
     tunicColor() {
-      if (this.side === 0) return this.type === "spear" ? 0x8d4a30 : 0xa5573a;
-      return this.type === "spear" ? 0x2f5c80 : 0x39705c;
+      if (this.type === "zombie") return this.side === 0 ? 0x8b9478 : 0x6f8480;
+      if (this.type === "ogre") return this.side === 0 ? 0xa96f47 : 0x5f7a6a;
+      if (this.type === "knight") return this.side === 0 ? 0xc2b4ae : 0xa8bcc2;
+      if (this.side === 0) return this.type === "spear" ? 0xb45c3c : 0xd4744f;
+      return this.type === "spear" ? 0x3d8296 : 0x39918f;
     }
     coatColor() {
-      return this.side === 0 ? 0x5a4230 : 0x3a3129;
+      return this.side === 0 ? 0x8a5340 : 0x2f606e;
     }
 
     // ── orders ─────────────────────────────────────────────────────────────
@@ -233,6 +443,9 @@
       else this.updateOrdered(dt);
 
       this.chargeTimer = Math.max(0, this.chargeTimer - dt);
+      const engaged = this.contactsOn > 0 || this.contactsAgainst > 0;
+      const ceiling = this.def.fatigueMax || 0;
+      this.fatigue = A.clamp(this.fatigue + (engaged ? this.def.fatigue : -0.09) * dt, 0, ceiling);
       this.updateSoldiers(dt, now);
       this.updateMeshes(now);
     }
@@ -303,7 +516,7 @@
       const cf = Math.cos(this.facing);
       const sf = Math.sin(this.facing);
       const routing = this.state === "routing";
-      // Routers stop being a formation: the grid blows apart and that is the visual tell.
+      // Routers stop being a formation: the shoal scatters, and that is the visual tell.
       const spread = routing ? 2.4 : 1;
       const chase = this.def.speed * (routing ? 2.0 : 1.75);
       const terrain = this.game.terrain;
@@ -337,11 +550,17 @@
       }
     }
 
+    /**
+     * Nothing here marches. Everything hangs a little off the bed and undulates whether it is moving
+     * or not, and rolls slightly as it turns — the difference between a column of infantry and a
+     * shoal is almost entirely in that idle motion, and it is free.
+     */
     updateMeshes(now) {
       const mesh = this.mesh;
-      const cav = this.type === "cavalry";
-      const bobRate = cav ? 11 : 7.5;
-      const bobAmp = cav ? 0.15 : 0.075;
+      const glider = !!this.def.mounted;
+      const swimRate = glider ? 2.6 : 1.7;
+      const swimAmp = glider ? 0.2 : 0.11;
+      const hover = glider ? 0.5 : 0.18;
       for (let i = 0; i < this.soldiers.length; i++) {
         const s = this.soldiers[i];
         if (!s.alive) {
@@ -351,23 +570,31 @@
           mesh.setMatrixAt(i, _m.compose(_p, _q, _s));
           continue;
         }
-        let y = s.ground;
+        let y = s.ground + hover;
         let lean = 0;
-        if (s.moving) y += Math.abs(Math.sin(now * bobRate + s.phase)) * bobAmp;
+        y += Math.sin(now * swimRate + s.phase) * swimAmp;
+        let roll = Math.sin(now * swimRate * 0.8 + s.phase) * 0.07;
+        let pitch = 0;
+        if (s.moving) {
+          y += Math.sin(now * swimRate * 2.1 + s.phase) * swimAmp * 0.5;
+          roll += Math.sin(now * swimRate * 1.6 + s.phase) * 0.09;
+          pitch = -0.09;
+        }
         if (s.fighting) {
           // A short lunge in and out: at this zoom that shimmer is what "melee" looks like.
           lean = Math.sin(now * 5.5 + s.phase) * 0.16;
           y += Math.abs(Math.sin(now * 5.5 + s.phase)) * 0.03;
+          roll += Math.sin(now * 4.1 + s.phase) * 0.06;
         }
         _p.set(s.x + Math.sin(s.face) * lean, y, s.z + Math.cos(s.face) * lean);
-        _q.setFromAxisAngle(UP, s.face);
+        _q.setFromEuler(_e.set(pitch, s.face, roll, "YXZ"));
         _s.set(s.scale, s.scale, s.scale);
         mesh.setMatrixAt(i, _m.compose(_p, _q, _s));
       }
       mesh.instanceMatrix.needsUpdate = true;
 
       const gy = this.game.terrain.heightAt(this.pos.x, this.pos.z);
-      this.banner.position.set(this.pos.x, gy, this.pos.z);
+      this.banner.position.set(this.pos.x, gy + Math.sin(now * 1.1 + this.id) * 0.2, this.pos.z);
       this.banner.rotation.y = this.facing + Math.sin(now * 1.4 + this.id) * 0.09;
       this.banner.rotation.z = Math.sin(now * 0.9 + this.id) * 0.035 + (this.state === "routing" ? 0.5 : 0);
 
@@ -422,6 +649,33 @@
     get isActive() {
       return this.state !== "gone" && this.state !== "routing";
     }
+    /** Attack falls off the longer a unit stays locked in. */
+    get vigour() {
+      return 1 / (1 + this.fatigue);
+    }
+
+    /** Positive when this unit is giving more than it is getting. */
+    get edge() {
+      const on = this.contactsOn;
+      const against = this.contactsAgainst;
+      if (!on && !against) return 0;
+      return (on - against) / Math.max(1, on + against);
+    }
+
+    /** The trait sheet, ready to render. */
+    get sheet() {
+      return {
+        name: this.name,
+        type: this.type,
+        typeLabel: A.TYPES[this.type].label,
+        rarity: A.rarityOf(this.rarity),
+        traits: this.traits.map((t) => A.TRAITS[t]),
+        record: this.record,
+        alive: this.alive,
+        initial: this.initial,
+      };
+    }
+
     get displayState() {
       if (this.state === "routing") return "routing";
       if (this.state === "fighting") return "in melee";

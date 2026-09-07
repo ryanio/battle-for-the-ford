@@ -34,12 +34,12 @@
         }
         if (u.aiTarget && !u.aiTarget.isActive) u.aiTarget = null;
 
-        if (u.type === "cavalry") this.rideAround(game, u, foes, now);
+        if (u.def.mounted) this.rideAround(game, u, foes, now);
         else this.advance(u, foes, load);
       }
     },
 
-    /** Infantry: walk at the nearest enemy, spreading out rather than stacking four-on-one. */
+    /** Foot: walk at the nearest enemy, spreading out rather than stacking four-on-one. */
     advance(u, foes, load) {
       let best = null;
       let bestScore = Infinity;
@@ -47,7 +47,7 @@
         let score = dist2(u, f);
         score *= 1 + (load.get(f) || 0) * 0.9;
         // Spearmen exist to meet horse. Let them.
-        if (u.type === "spear" && f.type === "cavalry") score *= 0.25;
+        if (u.type === "spear" && f.def.mounted) score *= 0.25;
         if (u.type === "sword" && f.type === "spear") score *= 0.7;
         if (score < bestScore) {
           bestScore = score;
@@ -83,7 +83,7 @@
           let score = dist2(u, f);
           if (pinned) score *= 0.28; // a busy enemy cannot turn to face you
           if (f.type === "spear" && !pinned) score *= 6; // do not ride onto braced spears
-          if (f.type === "cavalry") score *= 1.6;
+          if (f.def.mounted) score *= 1.6;
           if (score < bestScore) {
             bestScore = score;
             best = f;

@@ -5,11 +5,22 @@
  * The one thing worth calling out is right-DRAG: press where you want the line to stand, drag in the
  * direction you want it to face, release. Facing is half the game, so it gets its own gesture rather
  * than being inferred from the walk.
+ *
+ * The other thing worth calling out is `armed`. Edge panning is driven by the last pointer position
+ * the page was told about, and a page that loses focus is never told the pointer left — so alt-tab
+ * away with the cursor near an edge and the camera keeps panning for as long as you are gone. It is
+ * disarmed by blur, by the tab being hidden, and by the pointer leaving the document, and only a
+ * genuine pointermove arms it again. Refocusing on its own must not, or the stale coordinate that
+ * caused the runaway simply starts it up a second time.
  */
 ((A) => {
   const MIN_DIST = 26;
   const MAX_DIST = 170;
   const EDGE = 16;
+
+  // Built on first use: these are classic scripts and run before the module that publishes THREE.
+  let scratch;
+  const vec = (x, y, z) => (scratch || (scratch = new THREE.Vector3())).set(x, y, z);
 
   A.Controls = class Controls {
     constructor(game) {
@@ -23,6 +34,8 @@
 
       this.keys = new Set();
       this.mouse = { x: 0, y: 0, inside: false };
+      this.armed = false; // is the pointer position we hold actually current?
+      this.focused = typeof document !== "undefined" ? document.hasFocus() : true;
       this.drag = null;
       this.rightDrag = null;
       this.userMoved = false;
@@ -33,6 +46,71 @@
 
       this.bind();
       this.apply();
+      this.reframe();
+    }
+
+    /**
+     * Sit the camera where both lines are on screen at once, inside the band the chrome leaves free.
+     *
+     * Guessing a distance from the size of the deployment was not enough: perspective stretches the
+     * near half of the field far more than the far half, so the player's own army ended up under the
+     * command bar while the enemy sat comfortably in the middle. So this projects the two ends of
+     * the deployment, measures them in pixels, and pushes the camera back or slides it along until
+     * they both fit. It costs a few dozen iterations, once, at the start of a battle.
+     */
+    reframe() {
+      let minX = Infinity;
+      let maxX = -Infinity;
+      let minZ = Infinity;
+      let maxZ = -Infinity;
+      for (const u of this.game.units) {
+        if (u.state === "gone") continue;
+        minX = Math.min(minX, u.pos.x - u.halfWidth);
+        maxX = Math.max(maxX, u.pos.x + u.halfWidth);
+        minZ = Math.min(minZ, u.pos.z - u.halfDepth);
+        maxZ = Math.max(maxZ, u.pos.z + u.halfDepth);
+      }
+      if (!Number.isFinite(minX)) return;
+
+      this.yaw = Math.PI;
+      this.userMoved = false;
+      this.armed = false;
+      const cx = (minX + maxX) / 2;
+      this.target.set(cx, 0, (minZ + maxZ) / 2);
+      this.dist = A.clamp(Math.max(maxX - minX, maxZ - minZ) * 0.95, MIN_DIST, MAX_DIST);
+
+      const top = 76; // the top bar, plus the coach line under it
+      const bottom = 168; // the command bar, the unit read-out and the minimap
+      const band = Math.max(120, innerHeight - top - bottom);
+      const want = top + band / 2;
+
+      for (let i = 0; i < 60; i++) {
+        this.apply();
+        const near = this.screenY(cx, minZ);
+        const far = this.screenY(cx, maxZ);
+        const wide = this.screenX(minX, (minZ + maxZ) / 2) - this.screenX(maxX, (minZ + maxZ) / 2);
+        if (!Number.isFinite(near) || !Number.isFinite(far)) break;
+        const tall = near - far;
+        if ((tall > band || Math.abs(wide) > innerWidth * 0.86) && this.dist < MAX_DIST) {
+          this.dist = A.clamp(this.dist * 1.05, MIN_DIST, MAX_DIST);
+          continue;
+        }
+        const err = (near + far) / 2 - want;
+        if (Math.abs(err) < 3) break;
+        // Sliding the camera north pushes the field down the screen, so the correction is negative.
+        this.target.z -= err * 0.055 * (this.dist / 70);
+      }
+      this.apply();
+    }
+
+    screenY(x, z) {
+      const v = vec(x, this.game.terrain.heightAt(x, z), z).project(this.camera);
+      return ((1 - v.y) / 2) * innerHeight;
+    }
+
+    screenX(x, z) {
+      const v = vec(x, this.game.terrain.heightAt(x, z), z).project(this.camera);
+      return ((v.x + 1) / 2) * innerWidth;
     }
 
     bind() {
@@ -40,11 +118,26 @@
       addEventListener("contextmenu", (e) => e.preventDefault());
       addEventListener("keydown", (e) => this.onKey(e, true));
       addEventListener("keyup", (e) => this.onKey(e, false));
-      addEventListener("blur", () => this.keys.clear());
-      addEventListener("pointermove", (e) => this.onMove(e));
-      addEventListener("pointerleave", () => {
-        this.mouse.inside = false;
+
+      addEventListener("blur", () => this.standDown());
+      addEventListener("focus", () => {
+        // Focus back, but the pointer is wherever it is: wait to be told before panning again.
+        this.focused = true;
       });
+      document.addEventListener("visibilitychange", () => {
+        if (document.hidden) this.standDown();
+        else this.focused = true;
+      });
+      // pointerleave does not bubble, so listening on `window` for it never fires. The pointer
+      // leaving the document shows up as a pointerout with no relatedTarget, and as a mouseleave
+      // on the document element.
+      document.addEventListener("pointerout", (e) => {
+        if (!e.relatedTarget) this.disarm();
+      });
+      document.addEventListener("mouseleave", () => this.disarm());
+      document.documentElement.addEventListener("pointerleave", () => this.disarm());
+
+      addEventListener("pointermove", (e) => this.onMove(e));
       c.addEventListener("pointerdown", (e) => this.onDown(e));
       addEventListener("pointerup", (e) => this.onUp(e));
       c.addEventListener(
@@ -58,7 +151,21 @@
       );
     }
 
+    /** Lost the window. Drop every key, forget where the pointer was, and hold the camera still. */
+    standDown() {
+      this.focused = false;
+      this.keys.clear();
+      this.disarm();
+    }
+
+    disarm() {
+      this.armed = false;
+      this.mouse.inside = false;
+    }
+
     onKey(e, down) {
+      // Typing a 4 into the army builder must not also pause the battle behind it.
+      if (A.typingInAField(e.target)) return;
       const k = e.key.toLowerCase();
       if (down && k === " ") {
         e.preventDefault();
@@ -86,6 +193,8 @@
       this.mouse.x = e.clientX;
       this.mouse.y = e.clientY;
       this.mouse.inside = true;
+      this.armed = true;
+      this.focused = true;
       if (this.drag) {
         this.drag.x2 = e.clientX;
         this.drag.y2 = e.clientY;
@@ -214,8 +323,9 @@
         mz -= rz;
       }
 
-      // Edge scrolling, but never while a selection box is being dragged out.
-      if (this.mouse.inside && !this.drag) {
+      // Edge scrolling, but never while a selection box is being dragged out, and never on a
+      // pointer position the page has not been told is still true.
+      if (this.armed && this.focused && this.mouse.inside && !this.drag) {
         if (this.mouse.x < EDGE) {
           mx -= rx;
           mz -= rz;
@@ -254,19 +364,26 @@
      * Until the player touches the camera, it drifts to keep the fighting in frame. The moment they
      * pan, zoom or rotate it stops for good — an RTS camera that keeps stealing itself back is worse
      * than one that never helps at all.
+     *
+     * It also stays out of the way until there *is* fighting, so the deliberate opening shot — both
+     * lines in view, with the ground behind the enemy flank visible — is not immediately dragged
+     * back to the centre of mass before the player has read it.
      */
     followAction(dt) {
       let sx = 0;
       let sz = 0;
       let n = 0;
+      let anyEngaged = false;
       for (const u of this.game.units) {
         if (u.state === "gone") continue;
-        const w = u.contactsAgainst > 0 || u.contactsOn > 0 ? 4 : 1;
+        const engaged = u.contactsAgainst > 0 || u.contactsOn > 0;
+        anyEngaged = anyEngaged || engaged;
+        const w = engaged ? 4 : 1;
         sx += u.pos.x * w;
         sz += u.pos.z * w;
         n += w;
       }
-      if (!n) return;
+      if (!n || !anyEngaged) return;
       const k = 1 - Math.exp(-0.8 * dt);
       this.target.x += (sx / n - this.target.x) * k;
       this.target.z += (sz / n + 8 - this.target.z) * k;

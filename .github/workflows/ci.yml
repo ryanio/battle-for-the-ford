@@ -18,3 +18,22 @@ jobs:
         with:
           node-version-file: '.node-version'
       - run: npx --yes @biomejs/biome@2.5.12 ci .
+
+  qa:
+    name: play the game
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: '.node-version'
+      # The harness talks CDP to whatever Chromium it can find; runners ship one already.
+      - name: Locate a browser
+        run: |
+          for c in /usr/bin/google-chrome-stable /usr/bin/google-chrome /usr/bin/chromium /usr/bin/chromium-browser; do
+            if [ -x "$c" ]; then echo "CHROME=$c" >> "$GITHUB_ENV"; "$c" --version; exit 0; fi
+          done
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends chromium-browser
+          echo "CHROME=$(command -v chromium-browser)" >> "$GITHUB_ENV"
+      - run: node qa/play.mjs

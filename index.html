@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Anchor — Battle for the Ford</title>
-<meta name="description" content="A small Total War: Rome-inspired real-time battle, played in formations. Flank or be flanked.">
+<title>Anchor — Battle for the Reef Pass</title>
+<meta name="description" content="A real-time reef battle played in formations. Two shoals, one pass. Flank or be flanked.">
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -13,47 +13,118 @@
 <div id="marquee" hidden></div>
 <div id="markers"></div>
 
+<!--
+  One full-width bar across the top and one across the bottom. Both are single flex rows, which is
+  the whole reason the panels inside them cannot collide: an earlier version anchored the score to
+  the centre and the orders panel to the right edge, and below about 1250px they sat on top of each
+  other. Layout, not luck.
+-->
 <header id="topbar">
-  <div class="army" data-side="0">
-    <span class="army-name">Rome</span>
-    <div class="bar"><i id="bar0"></i></div>
-    <span class="army-men" id="men0">—</span>
+  <div class="slot left">
+    <button id="newgame" type="button">New battle</button>
+    <a id="home" href="https://github.com/ryanio/battle-for-the-ford">source</a>
   </div>
-  <div class="clash">vs</div>
-  <div class="army" data-side="1">
-    <span class="army-men" id="men1">—</span>
-    <div class="bar"><i id="bar1"></i></div>
-    <span class="army-name">Gauls</span>
+
+  <div class="centre">
+    <div class="scores">
+      <div class="army" data-side="0">
+        <span class="army-name" id="name0">Coral Court</span>
+        <div class="bar"><i id="bar0"></i></div>
+        <span class="army-men" id="men0">—</span>
+      </div>
+      <div class="clash">vs</div>
+      <div class="army" data-side="1">
+        <span class="army-men" id="men1">—</span>
+        <div class="bar"><i id="bar1"></i></div>
+        <span class="army-name" id="name1">Abyssal Tide</span>
+      </div>
+    </div>
+    <div id="stack">
+      <div id="coach" hidden>
+        <span class="objective"></span>
+        <span class="action"></span>
+      </div>
+      <div id="toast" hidden></div>
+    </div>
+  </div>
+
+  <div class="slot right">
+    <button id="help-toggle" type="button" aria-expanded="false"><kbd>?</kbd> Controls</button>
+    <aside id="help" class="collapsed">
+      <table>
+        <tr><th><kbd>Left-click</kbd></th><td>select · <kbd>drag</kbd> to box-select · <kbd>Shift</kbd> adds</td></tr>
+        <tr><th><kbd>Right-click</kbd></th><td>move there</td></tr>
+        <tr><th><kbd>Right-drag</kbd></th><td>move <em>and</em> face the way you dragged</td></tr>
+        <tr><th><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></th><td>pan · screen edge pans too</td></tr>
+        <tr><th><kbd>Q</kbd><kbd>E</kbd></th><td>rotate · <kbd>wheel</kbd> zoom</td></tr>
+        <tr><th><kbd>Space</kbd></th><td>pause · <kbd>Tab</kbd> select all</td></tr>
+        <tr><th><kbd>C</kbd></th><td>the selected formation's card — rarity, traits, record</td></tr>
+      </table>
+    </aside>
   </div>
 </header>
 
-<aside id="help">
-  <b>Orders</b>
-  <ul>
-    <li><kbd>Left-click</kbd> select · <kbd>drag</kbd> box-select · <kbd>Shift</kbd> add</li>
-    <li><kbd>Right-click</kbd> move · <kbd>right-drag</kbd> to set the facing of the line</li>
-    <li><kbd>WASD</kbd> / screen edge pan · <kbd>Q</kbd><kbd>E</kbd> rotate · <kbd>wheel</kbd> zoom</li>
-    <li><kbd>Space</kbd> pause · <kbd>Tab</kbd> select all</li>
-  </ul>
-  <p class="tip">Hit a formation in the flank or the rear and it will break long before it dies. That is the whole game.</p>
-</aside>
+<footer id="bottombar">
+  <div id="log"></div>
+  <div class="centre">
+    <section id="selinfo" hidden></section>
+    <div id="command"></div>
+  </div>
+  <div id="minimap"><canvas id="minimap-canvas" width="300" height="252"></canvas></div>
+</footer>
 
-<section id="selection"></section>
+<aside id="sheet" hidden></aside>
+
+<div id="shout" hidden></div>
 
 <div id="result" hidden>
   <h1 id="result-title"></h1>
   <p id="result-sub"></p>
-  <button id="restart" type="button">Fight again</button>
+  <div class="result-actions">
+    <button id="restart" type="button">Fight again</button>
+    <button id="result-new" type="button" class="ghost">Muster another shoal</button>
+  </div>
 </div>
 
-<div id="toast" hidden></div>
+<div id="builder" hidden>
+  <div class="muster">
+    <h2>Muster the shoals</h2>
+    <div class="presets">
+      <button class="preset" type="button" data-preset="classic"></button>
+      <button class="preset" type="button" data-preset="horde"></button>
+      <button class="preset" type="button" data-preset="monsters"></button>
+    </div>
+    <p class="preset-note" id="builder-note"></p>
+    <details id="builder-detail">
+      <summary>Or pick the roster yourself</summary>
+      <div class="armies">
+        <div class="army-col" data-side="0">
+          <h3><input id="builder-name0" type="text" maxlength="18" aria-label="First shoal name"></h3>
+          <div class="rows" id="builder-rows0"></div>
+          <div class="roster" data-side="0"></div>
+          <div class="total" id="builder-total0"></div>
+        </div>
+        <div class="army-col" data-side="1">
+          <h3><input id="builder-name1" type="text" maxlength="18" aria-label="Second shoal name"></h3>
+          <div class="rows" id="builder-rows1"></div>
+          <div class="roster" data-side="1"></div>
+          <div class="total" id="builder-total1"></div>
+        </div>
+      </div>
+      <p class="roster-hint">Tap a card to add a formation. Rarity buys traits, and traits change the numbers.</p>
+      <div class="legend" id="builder-legend"></div>
+    </details>
+    <div class="muster-actions">
+      <button id="builder-start" type="button">Begin the battle</button>
+      <button id="builder-cancel" type="button" class="ghost">Back</button>
+    </div>
+  </div>
+</div>
 
 <div id="boot">
-  <p>Mustering the legion…</p>
+  <p>Mustering the shoal…</p>
   <p class="boot-sub">loading three.js from cdnjs</p>
 </div>
-
-<a id="home" href="https://github.com/ryanio/battle-for-the-ford">&larr; source</a>
 
 <script>
   // Registered before anything else loads, so a broken script or a CDN that will not answer shows up
@@ -86,6 +157,8 @@
 <script src="./js/ai.js"></script>
 <script src="./js/controls.js"></script>
 <script src="./js/hud.js"></script>
+<script src="./js/coach.js"></script>
+<script src="./js/builder.js"></script>
 <script src="./js/game.js"></script>
 
 <script type="importmap">

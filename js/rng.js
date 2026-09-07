@@ -19,6 +19,13 @@
   };
 
   A.clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
+
+  /** True when a keystroke belongs to a form control rather than to the battle. */
+  A.typingInAField = (el) => {
+    if (!el?.tagName) return false;
+    const tag = el.tagName.toLowerCase();
+    return tag === "input" || tag === "select" || tag === "textarea" || el.isContentEditable === true;
+  };
   A.lerp = (a, b, t) => a + (b - a) * t;
 
   /** Shortest signed angle from `a` to `b`, in (-PI, PI]. */

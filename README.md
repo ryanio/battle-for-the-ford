@@ -1,16 +1,11 @@
-# Battle for the Ford
+# Tidebreak
 
 A real-time battle on a reef, in the browser. Two shoals, forty bodies to a formation, and a morale
 system tuned until flanking felt as decisive as it did in *Rome: Total War*.
 
-**Play it: [ryanio.github.io/battle-for-the-ford](https://ryanio.github.io/battle-for-the-ford/)**
+**Play it: [ryanio.github.io/tidebreak](https://ryanio.github.io/tidebreak/)**
 
 No build step. No npm dependencies. three.js from a CDN, everything else hand-written.
-
-> The repo is still called `battle-for-the-ford` because it started as a Roman field battle. The ford
-> is a reef pass now and the legions are reef guard, but the simulation underneath is the same one,
-> line for line and constant for constant. That was the point of the re-theme: change what it looks
-> like, change nothing about how it plays.
 
 ## The two-second version
 

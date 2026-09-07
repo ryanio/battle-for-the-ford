@@ -87,7 +87,6 @@
       box(0.26, 0.13, 0.26, 0, 1.19, 0.01, IRON), // helmet
       box(0.1, 0.15, 0.1, 0, 1.3, 0.01, livery), // crest
     ];
-    if (kind === "cavalry") throw new Error("cavalry uses rider()");
     if (kind === "spear") {
       p.push(box(0.07, 0.38, 0.38, -0.24, 0.68, 0.1, livery)); // small round shield
       p.push(box(0.05, 2.6, 0.05, 0.26, 1.15, 0.22, WOOD, [-0.22, 0, 0])); // pike shaft
@@ -99,8 +98,43 @@
     return merge(p);
   }
 
-  /** Horse plus rider, facing local +Z. */
-  function horseman(livery, tunic, coat) {
+  /**
+   * An ogre. Same idiom, twice the mass and no helmet — at RTS zoom the silhouette is the whole
+   * identity, so it is built wide and low with a club that reads from across the field.
+   */
+  function ogre(livery, tunic) {
+    return merge([
+      box(0.52, 0.6, 0.4, 0, 0.3, 0, 0x4a3a2a), // legs
+      box(0.86, 0.74, 0.52, 0, 0.96, 0, tunic), // torso
+      box(0.98, 0.2, 0.56, 0, 1.3, 0, 0x6f6152), // shoulders
+      box(0.8, 0.6, 0.1, 0, 1.0, -0.28, livery), // hide cloak in the army colour
+      box(0.36, 0.34, 0.34, 0, 1.55, 0.03, SKIN), // head
+      box(0.42, 0.12, 0.4, 0, 1.72, 0.03, IRON), // iron cap
+      box(0.16, 0.14, 0.16, 0.2, 1.6, 0.16, 0xd8d0c0), // tusk
+      box(0.22, 1.5, 0.22, 0.62, 1.1, 0.2, WOOD, [-0.5, 0, 0]), // club haft
+      box(0.42, 0.5, 0.42, 0.62, 1.75, 0.78, 0x6a6a68, [-0.5, 0, 0]), // club head
+    ]);
+  }
+
+  /**
+   * A shambling body. Rags in a washed-out livery, no shield, arms out — the point is that a block
+   * of them reads as a crowd rather than a formation even while it is still in perfect order.
+   */
+  function zombie(livery, tunic) {
+    return merge([
+      box(0.26, 0.42, 0.2, 0, 0.21, 0, 0x3f3a30),
+      box(0.34, 0.48, 0.24, 0, 0.65, 0, tunic),
+      box(0.4, 0.1, 0.24, 0, 0.86, 0, 0x555044),
+      box(0.36, 0.4, 0.05, 0, 0.68, -0.13, livery), // tattered colours
+      box(0.1, 0.12, 0.42, 0.2, 0.84, 0.22, tunic), // outstretched arms
+      box(0.1, 0.12, 0.42, -0.2, 0.84, 0.22, tunic),
+      box(0.19, 0.19, 0.19, 0, 1.02, 0.01, 0x9fae86), // grey-green head
+      box(0.07, 0.4, 0.07, 0.24, 0.7, 0.2, WOOD, [-0.9, 0, 0]), // broken shaft
+    ]);
+  }
+
+  /** Horse plus rider, facing local +Z. `heavy` plates both of them and swaps the cloth for steel. */
+  function horseman(livery, tunic, coat, heavy) {
     const p = [
       box(0.46, 0.5, 1.3, 0, 0.98, 0.0, coat), // barrel
       box(0.3, 0.46, 0.3, 0, 1.22, 0.62, coat, [0.55, 0, 0]), // neck
@@ -121,6 +155,13 @@
       box(0.05, 2.2, 0.05, 0.27, 1.6, 0.3, WOOD, [-1.25, 0, 0]), // couched lance
       box(0.07, 0.24, 0.07, 0.27, 2.06, 1.34, STEEL, [-1.25, 0, 0]),
     ];
+    if (heavy) {
+      p.push(box(0.54, 0.44, 1.2, 0, 1.0, 0.02, STEEL)); // barding over the barrel
+      p.push(box(0.3, 0.3, 0.4, 0, 1.44, 0.94, STEEL)); // chamfron
+      p.push(box(0.42, 0.5, 0.3, 0, 1.5, 0.02, STEEL)); // cuirass
+      p.push(box(0.28, 0.2, 0.28, 0, 1.86, 0.02, IRON)); // great helm
+      p.push(box(0.14, 0.5, 0.05, 0, 2.24, -0.02, livery)); // plume
+    }
     return merge(p);
   }
 
@@ -130,7 +171,10 @@
     const key = `${kind}:${livery}:${tunic}`;
     let g = cache.get(key);
     if (!g) {
-      g = kind === "cavalry" ? horseman(livery, tunic, coat) : soldier(kind, livery, tunic);
+      if (kind === "cavalry" || kind === "knight") g = horseman(livery, tunic, coat, kind === "knight");
+      else if (kind === "ogre") g = ogre(livery, tunic);
+      else if (kind === "zombie") g = zombie(livery, tunic);
+      else g = soldier(kind, livery, tunic);
       cache.set(key, g);
     }
     return g;

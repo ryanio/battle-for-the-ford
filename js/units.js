@@ -5,11 +5,24 @@
  */
 ((A) => {
   /**
-   * Three roles, one triangle: swords beat spears in a brawl, spears beat horse, horse rides down
-   * swords. The numbers are deliberately loud — a rock-paper-scissors you cannot feel is decoration.
+   * Six roles. The first three are one clean triangle — swords beat spears in a brawl, spears beat
+   * horse, horse rides down swords — and the numbers are deliberately loud, because a
+   * rock-paper-scissors you cannot feel is decoration.
+   *
+   * The other three exist to bend that triangle rather than extend it:
+   *   knight  heavy horse. The charge is the best in the game and the brawl afterwards is the worst:
+   *           `fatigue` is theirs alone, and it bleeds their attack down to under half if they are
+   *           still locked in half a minute later. Everything else fights at full strength forever,
+   *           which is how the original three were tuned and is deliberately left alone.
+   *   ogre    six models, each hitting like a file of men. Almost nothing frightens them, and there
+   *           are so few bodies that contact — which is what scales damage — is hard to get.
+   *   zombie  numerous, feeble, and `fearless`: they never rout. Flanking still doubles the damage
+   *           and does nothing at all to their nerve, so the whole trick of the game stops working
+   *           and you have to kill every last one of them instead.
    */
   A.TYPES = {
     sword: {
+      label: "Swords",
       men: 40,
       cols: 10,
       fileGap: 1.05,
@@ -22,8 +35,11 @@
       chargeDur: 3.0,
       steadiness: 2,
       reach: 1.5,
+      fatigue: 0,
+      blurb: "The line. Nothing special, good at everything, breaks if you leave its flank open.",
     },
     spear: {
+      label: "Spears",
       men: 40,
       cols: 10,
       fileGap: 1.12,
@@ -36,8 +52,11 @@
       chargeDur: 2.5,
       steadiness: 16,
       reach: 1.9,
+      fatigue: 0,
+      blurb: "A braced wall. Horse that charges it head-on dies on the points.",
     },
     cavalry: {
+      label: "Horse",
       men: 24,
       cols: 8,
       fileGap: 1.8,
@@ -50,13 +69,113 @@
       chargeDur: 3.5,
       steadiness: 6,
       reach: 1.7,
+      fatigue: 0,
+      mounted: true,
+      blurb: "Fast enough to get behind anything. Use it on backs, never on spears.",
+    },
+    knight: {
+      label: "Knights",
+      men: 16,
+      cols: 8,
+      fileGap: 2.05,
+      rankGap: 2.45,
+      speed: 7.2,
+      turn: 1.5,
+      attack: 1.75,
+      defense: 1.7,
+      charge: 5.2,
+      chargeDur: 3.0,
+      steadiness: 14,
+      reach: 1.8,
+      fatigue: 0.2,
+      fatigueMax: 1.25,
+      mounted: true,
+      blurb: "Armoured horse. The charge shatters a line; four seconds later they are ordinary.",
+    },
+    ogre: {
+      label: "Ogres",
+      men: 6,
+      cols: 3,
+      fileGap: 3.4,
+      rankGap: 3.4,
+      speed: 3.3,
+      turn: 0.9,
+      attack: 8.2,
+      defense: 1.4,
+      charge: 2.4,
+      chargeDur: 3.0,
+      steadiness: 10,
+      reach: 2.6,
+      fatigue: 0,
+      scale: 2.1,
+      blurb: "Six of them, each worth a file. Too few bodies to hold a frontage — they punch a hole.",
+    },
+    zombie: {
+      label: "Undead",
+      men: 50,
+      cols: 10,
+      fileGap: 1.1,
+      rankGap: 1.25,
+      speed: 2.7,
+      turn: 0.7,
+      attack: 0.95,
+      defense: 0.55,
+      charge: 1.0,
+      chargeDur: 0.1,
+      steadiness: 0,
+      reach: 1.4,
+      fatigue: 0,
+      fearless: true,
+      scale: 0.95,
+      blurb: "They do not rout. Flanking them is worth damage and nothing else — kill all sixty.",
     },
   };
 
+  A.TYPE_ORDER = ["sword", "spear", "cavalry", "knight", "ogre", "zombie"];
+
   A.MATCHUP = {
-    sword: { sword: 1.0, spear: 1.35, cavalry: 0.85 },
-    spear: { sword: 0.8, spear: 1.0, cavalry: 2.1 },
-    cavalry: { sword: 1.3, spear: 0.55, cavalry: 1.0 },
+    sword: { sword: 1.0, spear: 1.35, cavalry: 0.85, knight: 0.7, ogre: 0.75, zombie: 1.6 },
+    spear: { sword: 0.8, spear: 1.0, cavalry: 2.1, knight: 2.3, ogre: 1.25, zombie: 1.1 },
+    cavalry: { sword: 1.3, spear: 0.55, cavalry: 1.0, knight: 0.8, ogre: 0.7, zombie: 1.3 },
+    knight: { sword: 1.45, spear: 0.5, cavalry: 1.25, knight: 1.0, ogre: 0.85, zombie: 1.7 },
+    ogre: { sword: 1.5, spear: 0.9, cavalry: 1.2, knight: 1.15, ogre: 1.0, zombie: 1.6 },
+    zombie: { sword: 1.0, spear: 0.85, cavalry: 1.15, knight: 0.95, ogre: 0.6, zombie: 1.0 },
+  };
+
+  /**
+   * The two names a card shows under a unit: what it eats, and what eats it.
+   *
+   * Read as an exchange rate rather than as a raw multiplier — how hard I hit you over how hard you
+   * hit me. A one-sided reading picks the wrong answer: swords have their biggest number against the
+   * undead, but the undead barely hit back at all, and the fight a sword player actually wants is
+   * the one against spears. The ratio recovers the triangle the game is built on.
+   */
+  A.matchupNotes = (type) => {
+    const trade = (t) => A.MATCHUP[type][t] / A.MATCHUP[t][type];
+    const others = A.TYPE_ORDER.filter((t) => t !== type);
+    const best = others.reduce((a, b) => (trade(b) > trade(a) ? b : a));
+    const worst = others.reduce((a, b) => (trade(b) < trade(a) ? b : a));
+    return { beats: A.TYPES[best].label, beatsType: best, losesTo: A.TYPES[worst].label, losesToType: worst };
+  };
+
+  /**
+   * A formation of `men` of this type, kept at roughly the depth-to-frontage ratio the type was
+   * drawn at. The builder lets you set the size of a formation, and a block of ninety men has to
+   * still look like that type rather than like a stripe.
+   */
+  A.formationShape = (type, men) => {
+    const base = A.TYPES[type];
+    const n = Math.max(1, Math.round(men));
+    const ratio = Math.round(base.men / base.cols) / base.cols; // rows per column, as drawn
+    const rows = Math.max(1, Math.round(Math.sqrt(n * ratio)));
+    const cols = Math.max(1, Math.ceil(n / rows));
+    return {
+      men: n,
+      rows,
+      cols,
+      halfWidth: (cols * base.fileGap) / 2,
+      halfDepth: (rows * base.rankGap) / 2,
+    };
   };
 
   // Scratch objects, built on first use: these files are classic scripts and run before the inline
@@ -76,7 +195,10 @@
   A.Unit = class Unit {
     constructor(game, spec) {
       scratch();
-      const def = A.TYPES[spec.type];
+      // Each formation gets its own copy of the type: the army builder can set how many men are in
+      // it, and that changes the grid the block is drawn on.
+      const shape = A.formationShape(spec.type, spec.men || A.TYPES[spec.type].men);
+      const def = { ...A.TYPES[spec.type], ...shape };
       this.game = game;
       this.id = nextId++;
       this.side = spec.side;
@@ -94,8 +216,12 @@
       this.chargeTimer = 0;
       this.routTimer = 0;
       this.selected = false;
+      // Time in contact bleeds a unit's attack away. Knights lose it fastest — that is the whole
+      // difference between a knight and a horseman once the charge is spent.
+      this.fatigue = 0;
 
       // Per-frame combat readings, refilled by combat.js.
+      this.hitCalls = []; // flank/rear announcements the HUD has not shown yet
       this.contactsOn = 0; // my men touching an enemy
       this.contactsAgainst = 0; // enemy men touching me
       this.frontShare = 1; // fraction of incoming contact landing on my front arc
@@ -140,7 +266,7 @@
           // A little permanent slop per man so ranks are never machine-straight.
           wx: rng.gauss() * 0.14,
           wz: rng.gauss() * 0.14,
-          scale: rng.range(0.93, 1.07),
+          scale: rng.range(0.93, 1.07) * (d.scale || 1),
           pushX: 0,
           pushZ: 0,
           face: this.facing,
@@ -206,6 +332,9 @@
 
     /** Deliberately duller than the livery: the shield carries the army colour, the tunic the man. */
     tunicColor() {
+      if (this.type === "zombie") return this.side === 0 ? 0x6d7a5e : 0x5c6b63;
+      if (this.type === "ogre") return this.side === 0 ? 0x8a5b3c : 0x59614a;
+      if (this.type === "knight") return this.side === 0 ? 0x9aa3ad : 0x7f8792;
       if (this.side === 0) return this.type === "spear" ? 0x8d4a30 : 0xa5573a;
       return this.type === "spear" ? 0x2f5c80 : 0x39705c;
     }
@@ -233,6 +362,9 @@
       else this.updateOrdered(dt);
 
       this.chargeTimer = Math.max(0, this.chargeTimer - dt);
+      const engaged = this.contactsOn > 0 || this.contactsAgainst > 0;
+      const ceiling = this.def.fatigueMax || 0;
+      this.fatigue = A.clamp(this.fatigue + (engaged ? this.def.fatigue : -0.09) * dt, 0, ceiling);
       this.updateSoldiers(dt, now);
       this.updateMeshes(now);
     }
@@ -339,7 +471,7 @@
 
     updateMeshes(now) {
       const mesh = this.mesh;
-      const cav = this.type === "cavalry";
+      const cav = !!this.def.mounted;
       const bobRate = cav ? 11 : 7.5;
       const bobAmp = cav ? 0.15 : 0.075;
       for (let i = 0; i < this.soldiers.length; i++) {
@@ -422,6 +554,19 @@
     get isActive() {
       return this.state !== "gone" && this.state !== "routing";
     }
+    /** Attack falls off the longer a unit stays locked in. */
+    get vigour() {
+      return 1 / (1 + this.fatigue);
+    }
+
+    /** Positive when this unit is giving more than it is getting. */
+    get edge() {
+      const on = this.contactsOn;
+      const against = this.contactsAgainst;
+      if (!on && !against) return 0;
+      return (on - against) / Math.max(1, on + against);
+    }
+
     get displayState() {
       if (this.state === "routing") return "routing";
       if (this.state === "fighting") return "in melee";

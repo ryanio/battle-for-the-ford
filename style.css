@@ -297,6 +297,7 @@ kbd {
   letter-spacing: .13em; text-transform: uppercase; color: var(--muted);
 }
 #sheet .kind .rarity { color: var(--rare, var(--bronze)); }
+#sheet .kind .scar { color: var(--bad); }
 #sheet .traits { display: flex; flex-direction: column; gap: 3px; }
 #sheet .trait {
   display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px;

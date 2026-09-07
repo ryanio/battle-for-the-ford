@@ -182,7 +182,6 @@
     { key: "epic", label: "Epic", traits: 3, scale: 1.12, tint: "#b58ce8" },
     { key: "legendary", label: "Legendary", traits: 3, scale: 1.18, tint: "#ff8a6b" },
   ];
-  A.RARITY_ORDER = A.RARITY.map((r) => r.key);
   A.rarityOf = (key) => A.RARITY.find((r) => r.key === key) || A.RARITY[0];
 
   /** Every trait is one line and one number. If you cannot say what it does, it does not go in. */

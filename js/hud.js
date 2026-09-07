@@ -387,7 +387,8 @@
         return;
       }
       const s = u.sheet;
-      const sig = `${u.id}:${s.record.kills}:${s.record.flanks}:${s.record.rears}:${s.record.brokeEnemies}:${u.alive}`;
+      const r = s.record;
+      const sig = `${u.id}:${r.kills}:${r.flanks}:${r.rears}:${r.brokeEnemies}:${r.broke}:${u.alive}`;
       if (sig === this.sheetSig) return;
       this.sheetSig = sig;
       this.sheetEl.hidden = false;
@@ -399,7 +400,8 @@
         : '<div class="none">No traits. Common formations fight on their stat line alone.</div>';
       this.sheetEl.innerHTML =
         `<div class="head"><span class="sigil">${A.sigil(u.type)}</span>` +
-        `<div><div class="who"></div><div class="kind"><span class="rarity"></span> · <span class="tl"></span></div></div></div>` +
+        `<div><div class="who"></div><div class="kind"><span class="rarity"></span> · <span class="tl"></span>` +
+        `${s.record.broke ? ' · <span class="scar">broke once</span>' : ""}</div></div></div>` +
         `<div class="traits">${traits}</div>` +
         '<div class="record">' +
         `<div><span>killed</span><b>${s.record.kills}</b></div>` +

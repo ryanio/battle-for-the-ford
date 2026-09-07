@@ -192,7 +192,7 @@ kbd {
 }
 #command:empty { display: none; }
 .card {
-  flex: 0 0 auto; width: 84px; padding: 4px 5px 5px; border-radius: 3px;
+  flex: 0 0 auto; width: 94px; padding: 4px 6px 5px; border-radius: 3px;
   display: flex; flex-direction: column; align-items: stretch; gap: 3px;
   cursor: pointer; text-align: left; position: relative;
 }

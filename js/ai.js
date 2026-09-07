@@ -19,7 +19,7 @@
       // computing it per tick let the whole army pile onto one warband.
       const load = new Map();
       for (const u of mine) {
-        if (u.aiTarget && u.aiTarget.isActive) load.set(u.aiTarget, (load.get(u.aiTarget) || 0) + 1);
+        if (u.aiTarget?.isActive) load.set(u.aiTarget, (load.get(u.aiTarget) || 0) + 1);
       }
 
       for (const u of mine) {
@@ -73,9 +73,9 @@
      * come in behind it. Charging a formed spear wall head-on is how horse dies, so it is avoided
      * unless the spears already have their hands full.
      */
-    rideAround(game, u, foes, now) {
-      let target = u.ai && u.ai.target;
-      if (!target || !target.isActive || now > (u.ai ? u.ai.expires : 0)) {
+    rideAround(_game, u, foes, now) {
+      let target = u.ai?.target;
+      if (!target?.isActive || now > (u.ai ? u.ai.expires : 0)) {
         let best = null;
         let bestScore = Infinity;
         for (const f of foes) {

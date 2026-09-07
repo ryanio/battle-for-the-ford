@@ -55,8 +55,8 @@
         const alive = units.reduce((n, u) => n + (u.state === "gone" ? 0 : u.alive), 0);
         const steady = units.reduce((n, u) => n + (u.isActive ? u.alive : 0), 0);
         const total = g.startingMen[side];
-        this.bars[side].style.width = ((steady / total) * 100).toFixed(1) + "%";
-        this.men[side].textContent = steady + " / " + total + (alive > steady ? " ⚑" : "");
+        this.bars[side].style.width = `${((steady / total) * 100).toFixed(1)}%`;
+        this.men[side].textContent = `${steady} / ${total}${alive > steady ? " ⚑" : ""}`;
       }
 
       this.updateMarkers();
@@ -87,19 +87,19 @@
           continue;
         }
         el.style.display = "";
-        el.style.left = ((this.v.x + 1) / 2) * innerWidth + "px";
-        el.style.top = ((1 - this.v.y) / 2) * innerHeight + "px";
+        el.style.left = `${((this.v.x + 1) / 2) * innerWidth}px`;
+        el.style.top = `${((1 - this.v.y) / 2) * innerHeight}px`;
         el.classList.toggle("sel", u.selected);
 
         const fill = el.firstChild.firstChild;
-        fill.style.width = ((u.alive / u.initial) * 100).toFixed(0) + "%";
+        fill.style.width = `${((u.alive / u.initial) * 100).toFixed(0)}%`;
         // The bar carries two numbers at once: length is men, colour is nerve.
         fill.style.background =
           u.state === "routing"
             ? "#ff6a4d"
             : u.side === 0
-              ? "hsl(" + (10 + u.morale * 0.28).toFixed(0) + ", 72%, 55%)"
-              : "hsl(" + (212 - (100 - u.morale) * 0.9).toFixed(0) + ", 62%, 58%)";
+              ? `hsl(${(10 + u.morale * 0.28).toFixed(0)}, 72%, 55%)`
+              : `hsl(${(212 - (100 - u.morale) * 0.9).toFixed(0)}, 62%, 58%)`;
         el.lastChild.textContent = u.state === "routing" ? "ROUTING" : "";
       }
     }
@@ -124,10 +124,10 @@
       }
       for (const [u, el] of this.cards) {
         el.classList.toggle("routing", u.state === "routing");
-        el.querySelector(".men").textContent = u.alive + "/" + u.initial;
-        el.querySelector(".mor").textContent = Math.round(u.morale) + "%";
+        el.querySelector(".men").textContent = `${u.alive}/${u.initial}`;
+        el.querySelector(".mor").textContent = `${Math.round(u.morale)}%`;
         const m = el.querySelector(".meter i");
-        m.style.width = u.morale.toFixed(0) + "%";
+        m.style.width = `${u.morale.toFixed(0)}%`;
         m.style.background = u.morale > 55 ? "#7fb069" : u.morale > 30 ? "#e0b566" : "#d8503a";
         el.querySelector(".state").textContent =
           u.displayState + (u.worstFlank >= 2.5 ? " · rear!" : u.worstFlank > 0 ? " · flanked!" : "");

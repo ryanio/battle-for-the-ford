@@ -57,7 +57,10 @@
           if (!s.alive) continue;
           const k = key(s.x, s.z);
           let bucket = grid.get(k);
-          if (!bucket) grid.set(k, (bucket = []));
+          if (!bucket) {
+        bucket = [];
+        grid.set(k, bucket);
+      }
           bucket.push(u, s);
         }
       }

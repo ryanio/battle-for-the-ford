@@ -46,7 +46,7 @@
     if (!boot) return;
     boot.hidden = false;
     boot.className = "fatal";
-    boot.textContent = "The battle would not start: " + msg;
+    boot.textContent = `The battle would not start: ${msg}`;
   };
 
   A.Game = class Game {
@@ -262,7 +262,7 @@
 
     onRout(u) {
       this.hud.toast(
-        u.side === 0 ? u.name + " has broken and is fleeing!" : u.name + " breaks and runs!",
+        u.side === 0 ? `${u.name} has broken and is fleeing!` : `${u.name} breaks and runs!`,
         this.time,
       );
     }
@@ -346,7 +346,7 @@
     restart() {
       for (const u of this.units) {
         u.mesh.dispose();
-        u.outline.traverse((o) => o.geometry && o.geometry.dispose());
+        u.outline.traverse((o) => o.geometry?.dispose());
       }
       this.terrain.mesh.geometry.dispose();
       this.terrain.trees.dispose();
@@ -392,7 +392,7 @@
         game.hud.toast("Pin them with the hastati, then take them in the back.", 0);
       }
     } catch (err) {
-      A.fatal(err && err.message ? err.message : String(err));
+      A.fatal(err?.message ? err.message : String(err));
       throw err;
     }
   };

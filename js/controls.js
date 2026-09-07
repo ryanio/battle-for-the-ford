@@ -93,10 +93,10 @@
           this.drag.boxed = true;
           const m = this.marquee;
           m.hidden = false;
-          m.style.left = Math.min(this.drag.x1, this.drag.x2) + "px";
-          m.style.top = Math.min(this.drag.y1, this.drag.y2) + "px";
-          m.style.width = Math.abs(this.drag.x2 - this.drag.x1) + "px";
-          m.style.height = Math.abs(this.drag.y2 - this.drag.y1) + "px";
+          m.style.left = `${Math.min(this.drag.x1, this.drag.x2)}px`;
+          m.style.top = `${Math.min(this.drag.y1, this.drag.y2)}px`;
+          m.style.width = `${Math.abs(this.drag.x2 - this.drag.x1)}px`;
+          m.style.height = `${Math.abs(this.drag.y2 - this.drag.y1)}px`;
         }
       }
     }

@@ -1,15 +1,16 @@
 {
+  "//": "noAssignInExpressions is off: every file uses the (window.Anchor = window.Anchor || {}) namespace idiom, which is deliberate — these are classic scripts, not ES modules, because modules do not load over file://.",
   "$schema": "https://biomejs.dev/schemas/2.5.12/schema.json",
-  "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
+  "vcs": {
+    "enabled": true,
+    "clientKind": "git",
+    "useIgnoreFile": true
+  },
   "files": {
     "includes": [
-      "**/*.ts",
       "**/*.js",
-      "**/*.mjs",
       "**/*.json",
-      "!**/node_modules",
-      "!**/dist",
-      "!**/package-lock.json"
+      "!**/node_modules/**"
     ]
   },
   "formatter": {
@@ -27,7 +28,8 @@
         "useNodejsImportProtocol": "error"
       },
       "suspicious": {
-        "noExplicitAny": "error"
+        "noExplicitAny": "error",
+        "noAssignInExpressions": "off"
       }
     }
   },

@@ -182,7 +182,7 @@
     }
 
     /** A rectangle of four thin slabs, drawn on top of everything so hills never hide it. */
-    buildOutline(game) {
+    buildOutline(_game) {
       const g = new THREE.Group();
       const w = this.halfWidth + 0.9;
       const d = this.halfDepth + 0.9;
@@ -282,7 +282,7 @@
       }
     }
 
-    updateRout(dt, now) {
+    updateRout(dt, _now) {
       this.routTimer += dt;
       const t = this.game.terrain;
       const homeZ = this.side === 0 ? -t.depth / 2 - 45 : t.depth / 2 + 45;

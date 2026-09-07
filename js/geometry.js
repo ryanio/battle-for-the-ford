@@ -127,7 +127,7 @@
   /** Cache keyed on type+livery: six geometries serve a whole battlefield. */
   const cache = new Map();
   A.soldierGeometry = (kind, livery, tunic, coat) => {
-    const key = kind + ":" + livery + ":" + tunic;
+    const key = `${kind}:${livery}:${tunic}`;
     let g = cache.get(key);
     if (!g) {
       g = kind === "cavalry" ? horseman(livery, tunic, coat) : soldier(kind, livery, tunic);

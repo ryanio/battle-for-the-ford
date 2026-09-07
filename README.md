@@ -16,7 +16,7 @@ points at the open water behind the end of the enemy line.
 
 ## The scenario
 
-**Coral Court — 208 in 6 formations. Abyssal Tide — 224 in 6.** The Court is outnumbered in the line
+**Ember Court — 208 in 6 formations. Abyssal Tide — 224 in 6.** The Court is outnumbered in the line
 and has twice the rays. That asymmetry *is* the scenario: you cannot win the shoving match, so you
 have to use the fast things.
 

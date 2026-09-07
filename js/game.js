@@ -1,7 +1,7 @@
 /**
  * Battle for the Reef Pass — one engagement, two shoals, no campaign map.
  *
- * The scenario is stacked on purpose: the Coral Court fields fewer bodies in the line but twice the
+ * The scenario is stacked on purpose: the Ember Court fields fewer bodies in the line but twice the
  * rays, so winning means pinning the Tide's shell warbands with the reef guard and then taking them
  * in the back with the riders. Fight it as a shoving match and you lose on numbers.
  *
@@ -17,7 +17,7 @@
     // urchins held back as a reserve, and the rays out on both wings where they belong.
     { side: 0, type: "sword", name: "Reef Guard I", x: -13, z: -34 },
     { side: 0, type: "sword", name: "Reef Guard II", x: 0, z: -34 },
-    { side: 0, type: "sword", name: "Shield Coral", x: 13, z: -34 },
+    { side: 0, type: "sword", name: "Shield Anemone", x: 13, z: -34 },
     { side: 0, type: "spear", name: "Urchin Wall", x: 0, z: -48 },
     { side: 0, type: "cavalry", name: "Ray Riders I", x: -32, z: -29 },
     { side: 0, type: "cavalry", name: "Ray Riders II", x: 32, z: -29 },
@@ -31,7 +31,7 @@
     { side: 1, type: "cavalry", name: "Skate Riders", x: -40, z: 29 },
   ];
 
-  // Coral against current — the reef pairing the Anchor palette is built on.
+  // Ember against current — the reef pairing the Anchor palette is built on.
   const LIVERY = [0xff8a6b, 0x3fb6cc];
 
   /** What a formation of each type is called, per side. Numerals get appended when there is more. */
@@ -41,7 +41,7 @@
       spear: "Urchin Wall",
       cavalry: "Ray Riders",
       knight: "Nautilus",
-      ogre: "Coral Titan",
+      ogre: "Ember Titan",
       zombie: "The Drowned",
     },
     {
@@ -149,7 +149,7 @@
   A.PRESETS = {
     classic: {
       label: "Classic",
-      names: ["Coral Court", "Abyssal Tide"],
+      names: ["Ember Court", "Abyssal Tide"],
       note: "The Court is outnumbered in the line and has twice the rays. Pin, then flank.",
       roster: ROSTER,
     },
@@ -168,7 +168,7 @@
     },
     monsters: {
       label: "Monsters",
-      names: ["Coral Titans", "The Trench"],
+      names: ["Ember Titans", "The Trench"],
       note: "Six leviathans hit like sixty and cannot hold a frontage. Everything here punches holes.",
       sides: [
         [
@@ -190,7 +190,7 @@
     const preset = typeof cfg === "string" ? A.PRESETS[cfg] : null;
     const c = preset || cfg || A.PRESETS.classic;
     return {
-      names: c.names || ["Coral Court", "Abyssal Tide"],
+      names: c.names || ["Ember Court", "Abyssal Tide"],
       note: c.note || "",
       roster: c.roster || deploy(c.sides),
       sides: c.sides || null,

@@ -379,7 +379,7 @@ button.ghost { padding: 11px 20px; color: var(--muted); }
   padding: 20px; background: rgba(4, 12, 17, .84); overflow: auto;
 }
 #builder[hidden] { display: none; }
-.muster { width: min(760px, 100%); padding: 18px 20px 16px; border-radius: 5px; }
+.muster { width: min(800px, 100%); padding: 18px 20px 16px; border-radius: 5px; }
 .muster h2 {
   margin: 0 0 12px; font-size: 14px; letter-spacing: .18em; text-transform: uppercase;
   color: var(--bronze); font-weight: 700;
@@ -396,7 +396,7 @@ button.ghost { padding: 11px 20px; color: var(--muted); }
 #builder-detail summary { cursor: pointer; color: var(--muted); font-size: 12px; }
 #builder-detail summary:hover { color: var(--gold); }
 .armies { display: flex; gap: 14px; margin-top: 12px; flex-wrap: wrap; }
-.army-col { flex: 1 1 280px; min-width: 260px; }
+.army-col { flex: 1 1 300px; min-width: 288px; }
 .army-col h3 { margin: 0 0 7px; }
 .army-col h3 input {
   width: 100%; font: 700 12px/1 ui-sans-serif, system-ui, sans-serif;
@@ -406,8 +406,8 @@ button.ghost { padding: 11px 20px; color: var(--muted); }
 .army-col[data-side="1"] h3 input { color: var(--gaul); }
 .rows { display: flex; flex-direction: column; gap: 5px; }
 .brow { display: flex; align-items: center; gap: 5px; }
-.brow select { flex: 1 1 auto; min-width: 84px; }
-.brow input { width: 56px; text-align: center; cursor: text; padding: 4px 3px; }
+.brow select { flex: 1 1 auto; min-width: 104px; }
+.brow input { width: 48px; text-align: center; cursor: text; padding: 4px 2px; }
 .brow .x { padding: 4px 6px; color: var(--faint); flex: 0 0 auto; }
 .brow label { font-size: 10px; color: var(--faint); letter-spacing: .06em; }
 /* The roster you pick a formation out of. Cards, because that is what this is. */
@@ -420,7 +420,7 @@ button.ghost { padding: 11px 20px; color: var(--muted); }
 .pick b { font: 600 9.5px/1.1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .02em; }
 .pick:hover svg { color: var(--gold); }
 .roster-hint { margin: 10px 0 0; font-size: 11.5px; color: var(--faint); }
-.brow select.rar { flex: 0 0 100px; font-size: 11px; padding: 4px 4px; }
+.brow select.rar { flex: 0 0 96px; font-size: 11px; padding: 4px 3px; }
 .brow select.rar[data-rarity="uncommon"] { color: #7fc9a8; }
 .brow select.rar[data-rarity="rare"] { color: #5fd4e4; }
 .brow select.rar[data-rarity="epic"] { color: #b58ce8; }

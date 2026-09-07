@@ -149,7 +149,7 @@
     showResult(won, sub) {
       this.resultEl.hidden = false;
       this.resultEl.className = won ? "win" : "lose";
-      $("result-title").textContent = won ? "The field is yours" : "The line is broken";
+      $("result-title").textContent = won ? "The pass is yours" : "The line is broken";
       $("result-sub").textContent = sub;
     }
 

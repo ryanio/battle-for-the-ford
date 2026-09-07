@@ -61,6 +61,12 @@ during development: module-level `new THREE.Matrix4()` scratch objects ran befor
 
 ## Development
 
+`noAssignInExpressions` is disabled in `biome.json`: every file uses the
+`(window.Anchor = window.Anchor || {})` namespace idiom, which is the whole point of the
+classic-script architecture described above. Rewriting it nine times to satisfy a rule that is wrong
+about this code would be noise.
+
+
 ```bash
 npx biome check .     # lint and format
 python3 -m http.server -d . 8000

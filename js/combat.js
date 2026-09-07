@@ -58,9 +58,9 @@
           const k = key(s.x, s.z);
           let bucket = grid.get(k);
           if (!bucket) {
-        bucket = [];
-        grid.set(k, bucket);
-      }
+            bucket = [];
+            grid.set(k, bucket);
+          }
           bucket.push(u, s);
         }
       }

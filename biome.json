@@ -1,5 +1,4 @@
 {
-  "//": "noAssignInExpressions is off: every file uses the (window.Anchor = window.Anchor || {}) namespace idiom, which is deliberate — these are classic scripts, not ES modules, because modules do not load over file://.",
   "$schema": "https://biomejs.dev/schemas/2.5.12/schema.json",
   "vcs": {
     "enabled": true,
@@ -7,11 +6,7 @@
     "useIgnoreFile": true
   },
   "files": {
-    "includes": [
-      "**/*.js",
-      "**/*.json",
-      "!**/node_modules/**"
-    ]
+    "includes": ["**/*.js", "**/*.json", "!**/node_modules"]
   },
   "formatter": {
     "enabled": true,

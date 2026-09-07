@@ -37,20 +37,20 @@
   /** What a formation of each type is called, per side. Numerals get appended when there is more. */
   const NAMES = [
     {
-      sword: "Hastati",
-      spear: "Triarii",
-      cavalry: "Equites",
-      knight: "Cataphracts",
-      ogre: "Colossi",
-      zombie: "The Unquiet",
+      sword: "Reef Guard",
+      spear: "Urchin Wall",
+      cavalry: "Ray Riders",
+      knight: "Nautilus Knights",
+      ogre: "Coral Titan",
+      zombie: "The Drowned",
     },
     {
-      sword: "Warband",
-      spear: "Gaesatae",
-      cavalry: "Gallic Horse",
-      knight: "Iron Riders",
-      ogre: "Ogres",
-      zombie: "The Risen",
+      sword: "Shell Warband",
+      spear: "Spinefront",
+      cavalry: "Skate Riders",
+      knight: "Ironshell Riders",
+      ogre: "Trench Colossus",
+      zombie: "The Sunken",
     },
   ];
   const NUMERALS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"];

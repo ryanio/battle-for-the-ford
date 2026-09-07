@@ -86,9 +86,9 @@
         // The head sits at the centre of the box, because the box is positioned on the patch of
         // open ground behind the enemy — that is the spot the arrow is naming.
         '<svg viewBox="0 0 120 78" aria-hidden="true">' +
-        '<path d="M6 74 C 0 30, 30 16, 58 36" fill="none" stroke="#0b0906" stroke-width="14" stroke-linecap="round"/>' +
-        '<path d="M6 74 C 0 30, 30 16, 58 36" fill="none" stroke="#e5bd72" stroke-width="7.5" stroke-linecap="round"/>' +
-        '<polygon points="0,-11 23,1 -3,12" fill="#e5bd72" stroke="#0b0906" stroke-width="2.5" ' +
+        '<path d="M6 74 C 0 30, 30 16, 58 36" fill="none" stroke="#04141b" stroke-width="14" stroke-linecap="round"/>' +
+        '<path d="M6 74 C 0 30, 30 16, 58 36" fill="none" stroke="#7fe3f0" stroke-width="7.5" stroke-linecap="round"/>' +
+        '<polygon points="0,-11 23,1 -3,12" fill="#7fe3f0" stroke="#04141b" stroke-width="2.5" ' +
         'stroke-linejoin="round" transform="translate(60 39) rotate(36)"/>' +
         "</svg>";
       markers.appendChild(el);

@@ -1,47 +1,59 @@
 /*
- * Anchor — Battle for the Ford. UI chrome only; everything in the field is three.js.
+ * Anchor — Battle for the Reef Pass. UI chrome only; everything in the water is three.js.
  *
- * The look is borrowed from Rome: Total War — warm bronze and parchment against the green field,
- * restrained framing rather than skeuomorphic clutter, and a bottom bar of unit cards that carries
- * the whole state of your line so it can be read in one glance. Legible first, decorative second.
+ * The layout is borrowed from Rome: Total War — a bar of unit cards along the bottom carrying the
+ * whole state of your line so it can be read in one glance, restrained framing rather than
+ * skeuomorphic clutter. The colour is the Anchor palette from ~/Projects/anchor/theme/tokens.css:
+ * deep water, an ocean cyan as the primary and coral as the sparing counterpoint. The two shoals are
+ * that reef pairing — coral against current — so the factions and the brand are the same idea.
+ *
+ * Legible first, decorative second.
  */
 :root {
-  --ink: #f3e9d4;
-  --muted: #b1a087;
-  --faint: #8b7c66;
-  --panel: linear-gradient(180deg, rgba(36, 28, 18, 0.9), rgba(20, 15, 10, 0.94));
-  --edge: rgba(196, 155, 86, 0.34);
-  --edge-soft: rgba(196, 155, 86, 0.16);
-  --bronze: #c49b56;
-  --gold: #e5bd72;
-  --rome: #d8503a;
-  --gaul: #4d86c6;
-  --good: #8ab558;
-  --warn: #e0b566;
-  --bad: #e2593f;
+  /* Anchor tokens, dark semantics. Never a raw hex below this block. */
+  --depth-950: #06131a;
+  --depth-900: #0a1c25;
+  --depth-800: #102b37;
+  --depth-700: #1a4152;
+  --current: #5fd4e4;
+  --coral: #ff8a6b;
+
+  --ink: #e8f2f4;
+  --muted: #93a8ad;
+  --faint: #6f858b;
+  --panel: linear-gradient(180deg, rgba(10, 28, 37, 0.86), rgba(6, 19, 26, 0.93));
+  --edge: rgba(95, 212, 228, 0.26);
+  --edge-soft: rgba(95, 212, 228, 0.13);
+  --bronze: #3f9fb4;
+  --gold: #7fe3f0;
+  --rome: var(--coral);
+  --gaul: var(--current);
+  --good: #6fc9a4;
+  --warn: #e8c56b;
+  --bad: #ff7a5c;
   --top-h: 46px;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; }
 body {
-  margin: 0; overflow: hidden; background: #0d0f0c; color: var(--ink);
+  margin: 0; overflow: hidden; background: var(--depth-950); color: var(--ink);
   font: 13px/1.45 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   -webkit-font-smoothing: antialiased; user-select: none; cursor: default;
 }
 #stage { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
 
 /* ── the bronze-and-parchment recipe every panel shares ──────────────────── */
-#topbar, #bottombar, #help, #command .card, #selinfo, #log, #minimap, #toast, #coach, .sheet {
+#topbar, #bottombar, #help, #command .card, #selinfo, #log, #minimap, #toast, #coach, #sheet, .muster {
   background: var(--panel);
   border: 1px solid var(--edge);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 232, 186, 0.08);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(160, 230, 240, 0.08);
   backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
 }
 button, input, select {
   font: inherit; color: var(--ink); background: rgba(255, 255, 255, 0.05);
   border: 1px solid var(--edge); border-radius: 3px; padding: 4px 9px; cursor: pointer;
 }
-button:hover, select:hover { border-color: var(--bronze); background: rgba(224, 181, 102, 0.12); }
+button:hover, select:hover { border-color: var(--current); background: rgba(95, 212, 228, 0.12); }
 button:focus-visible, input:focus-visible, select:focus-visible {
   outline: 2px solid var(--gold); outline-offset: 1px;
 }
@@ -87,8 +99,8 @@ kbd {
   background: rgba(0, 0, 0, 0.45); border: 1px solid var(--edge-soft); border-radius: 2px;
 }
 .bar i { display: block; height: 100%; width: 100%; transition: width .25s linear; }
-#bar0 { background: linear-gradient(180deg, #e2694f, #a8341f); }
-#bar1 { background: linear-gradient(180deg, #6fa2dc, #2f5f96); float: right; }
+#bar0 { background: linear-gradient(180deg, #ffa48a, #c8543a); }
+#bar1 { background: linear-gradient(180deg, #8ce6f2, #2b8fa6); float: right; }
 .clash { color: var(--faint); font-size: 10.5px; letter-spacing: .14em; white-space: nowrap; }
 
 /* ── the coach line and the toast, stacked under the score ───────────────── */
@@ -187,9 +199,9 @@ kbd {
 .card:hover { border-color: var(--bronze); }
 .card.sel {
   border-color: var(--gold);
-  background: linear-gradient(180deg, rgba(90, 70, 34, .92), rgba(38, 29, 16, .95));
-  box-shadow: 0 0 0 2px var(--gold), 0 0 18px rgba(229, 189, 114, .35),
-              0 2px 16px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(255, 232, 186, .18);
+  background: linear-gradient(180deg, rgba(26, 65, 82, .92), rgba(10, 28, 37, .95));
+  box-shadow: 0 0 0 2px var(--gold), 0 0 18px rgba(127, 227, 240, .35),
+              0 2px 16px rgba(0, 0, 0, .5), inset 0 1px 0 rgba(180, 240, 250, .18);
 }
 /* A caret over the selected card, so the eye finds it before it reads anything. */
 .card.sel::before {
@@ -209,8 +221,8 @@ kbd {
 }
 .card .nerve { height: 4px; }
 .card .strength i, .card .nerve i { display: block; height: 100%; transition: width .2s linear; }
-.card[data-side="0"] .strength i { background: linear-gradient(180deg, #e2694f, #a8341f); }
-.card[data-side="1"] .strength i { background: linear-gradient(180deg, #6fa2dc, #2f5f96); }
+.card[data-side="0"] .strength i { background: linear-gradient(180deg, #ffa48a, #c8543a); }
+.card[data-side="1"] .strength i { background: linear-gradient(180deg, #8ce6f2, #2b8fa6); }
 .card .count {
   position: absolute; top: 3px; right: 5px;
   font: 600 9px/1 ui-monospace, Menlo, monospace; color: var(--faint);
@@ -218,7 +230,7 @@ kbd {
 /* A unit about to break flashes before it breaks — the tell that makes a rout readable. */
 .card.wavering { animation: waver .6s ease-in-out infinite alternate; }
 @keyframes waver { from { border-color: var(--edge); } to { border-color: var(--bad); } }
-.card.routing { border-color: var(--bad); background: linear-gradient(180deg, rgba(90, 28, 18, .85), rgba(30, 12, 8, .92)); }
+.card.routing { border-color: var(--bad); background: linear-gradient(180deg, rgba(86, 32, 22, .85), rgba(24, 12, 10, .93)); }
 .card.routing .name { color: #ffb0a0; }
 .card.gone { opacity: .3; filter: grayscale(1); pointer-events: none; }
 .card .tag {
@@ -237,7 +249,7 @@ kbd {
 .marker .m-bar i { display: block; height: 100%; }
 .marker .m-tag {
   margin-top: 2px; font: 800 9.5px/1 ui-sans-serif, system-ui, sans-serif;
-  letter-spacing: .14em; color: #ff9c86; text-shadow: 0 1px 3px #000;
+  letter-spacing: .14em; color: var(--bad); text-shadow: 0 1px 3px #000;
 }
 .marker.sel .m-bar { outline-color: var(--gold); box-shadow: 0 0 0 1px var(--gold); }
 
@@ -248,8 +260,8 @@ kbd {
   color: var(--gold); text-shadow: 0 2px 6px #000, 0 0 18px rgba(0, 0, 0, .8);
   animation: hit-rise 1.5s ease-out forwards; white-space: nowrap;
 }
-.hit-call.rear { color: #ffd27a; font-size: 21px; }
-.hit-call.against { color: #ff8a72; }
+.hit-call.rear { color: #b9f2fb; font-size: 21px; }
+.hit-call.against { color: var(--coral); }
 @keyframes hit-rise {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(.6); }
   18% { opacity: 1; transform: translate(-50%, -60%) scale(1.12); }
@@ -269,6 +281,47 @@ kbd {
   0%, 100% { opacity: .6; transform: translate(-50%, -50%) scale(calc(.94 * var(--flip)), .94); }
   50% { opacity: 1; transform: translate(-50%, -50%) scale(calc(1.08 * var(--flip)), 1.08); }
 }
+
+/* ── the trait sheet: a formation as a collectible card ──────────────────── */
+#sheet {
+  position: fixed; z-index: 5; right: 10px; bottom: 150px; width: 228px;
+  padding: 10px 12px; border-radius: 4px; display: flex; flex-direction: column; gap: 9px;
+}
+#sheet[hidden] { display: none; }
+#sheet .head { display: flex; align-items: center; gap: 9px; }
+#sheet .head .sigil { width: 30px; height: 30px; flex: 0 0 auto; color: var(--rare, var(--bronze)); }
+#sheet .head svg { width: 100%; height: 100%; display: block; }
+#sheet .who { font: 650 13px/1.2 ui-sans-serif, system-ui, sans-serif; }
+#sheet .kind {
+  font: 600 9.5px/1.3 ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: .13em; text-transform: uppercase; color: var(--muted);
+}
+#sheet .kind .rarity { color: var(--rare, var(--bronze)); }
+#sheet .traits { display: flex; flex-direction: column; gap: 3px; }
+#sheet .trait {
+  display: flex; justify-content: space-between; gap: 8px; font-size: 11.5px;
+  padding: 3px 6px; border-radius: 2px; background: rgba(95, 212, 228, .07);
+  border-left: 2px solid var(--rare, var(--bronze));
+}
+#sheet .trait b { font-weight: 650; color: var(--ink); }
+#sheet .trait span { color: var(--muted); font-family: var(--font-mono, ui-monospace), Menlo, monospace; font-size: 10.5px; }
+#sheet .none { font-size: 11.5px; color: var(--faint); font-style: italic; }
+#sheet .record { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 8px; }
+#sheet .record div { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); }
+#sheet .record b { color: var(--ink); font: 650 11.5px/1 ui-monospace, Menlo, monospace; }
+#sheet .vs {
+  font-size: 11px; color: var(--muted); border-top: 1px solid var(--edge-soft); padding-top: 7px;
+}
+#sheet .vs b { color: var(--good); font-weight: 600; }
+#sheet .vs s { color: var(--bad); text-decoration: none; font-weight: 600; }
+
+/* Rarity on a command-bar card: a hairline down the left edge, nothing louder. */
+.card { border-left-width: 3px; }
+.card[data-rarity="common"] { border-left-color: rgba(147, 168, 173, .5); }
+.card[data-rarity="uncommon"] { border-left-color: #7fc9a8; }
+.card[data-rarity="rare"] { border-left-color: #5fd4e4; }
+.card[data-rarity="epic"] { border-left-color: #b58ce8; }
+.card[data-rarity="legendary"] { border-left-color: #ff8a6b; }
 
 /* ── the shout when something breaks ─────────────────────────────────────── */
 #shout {
@@ -296,14 +349,14 @@ kbd {
 /* ── selection marquee ───────────────────────────────────────────────────── */
 #marquee {
   position: fixed; z-index: 4; pointer-events: none;
-  border: 1px solid var(--gold); background: rgba(224, 181, 102, 0.13);
+  border: 1px solid var(--gold); background: rgba(127, 227, 240, 0.13);
 }
 
 /* ── result ──────────────────────────────────────────────────────────────── */
 #result {
   position: fixed; z-index: 7; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 6px; text-align: center; padding: 24px;
-  background: radial-gradient(ellipse at center, rgba(10, 8, 6, .55), rgba(10, 8, 6, .93));
+  background: radial-gradient(ellipse at center, rgba(6, 19, 26, .55), rgba(6, 19, 26, .94));
 }
 #result[hidden] { display: none; }
 #result h1 { margin: 0; font-size: 54px; letter-spacing: .1em; text-transform: uppercase;
@@ -313,20 +366,20 @@ kbd {
 #result p { margin: 0 0 20px; color: var(--muted); max-width: 46ch; }
 .result-actions { display: flex; gap: 10px; }
 #restart {
-  font: 600 14px/1 inherit; color: #17130d; background: var(--gold);
-  border: 1px solid #f0cd85; border-radius: 3px; padding: 11px 24px;
+  font: 600 14px/1 inherit; color: #06131a; background: var(--gold);
+  border: 1px solid #a9f0f8; border-radius: 3px; padding: 11px 24px;
 }
-#restart:hover { background: #f0c87c; }
+#restart:hover { background: #a5eef8; }
 button.ghost { padding: 11px 20px; color: var(--muted); }
 
 /* ── the army builder ────────────────────────────────────────────────────── */
 #builder {
   position: fixed; z-index: 8; inset: 0; display: flex; align-items: center; justify-content: center;
-  padding: 20px; background: rgba(8, 7, 5, .82); overflow: auto;
+  padding: 20px; background: rgba(4, 12, 17, .84); overflow: auto;
 }
 #builder[hidden] { display: none; }
-.sheet { width: min(720px, 100%); padding: 18px 20px 16px; border-radius: 5px; }
-.sheet h2 {
+.muster { width: min(760px, 100%); padding: 18px 20px 16px; border-radius: 5px; }
+.muster h2 {
   margin: 0 0 12px; font-size: 14px; letter-spacing: .18em; text-transform: uppercase;
   color: var(--bronze); font-weight: 700;
 }
@@ -335,7 +388,7 @@ button.ghost { padding: 11px 20px; color: var(--muted); }
   flex: 1 1 150px; padding: 9px 12px; text-align: left; border-radius: 3px;
   font-weight: 650; letter-spacing: .04em;
 }
-.preset.on { border-color: var(--gold); color: var(--gold); background: rgba(229, 189, 114, .12); }
+.preset.on { border-color: var(--gold); color: var(--gold); background: rgba(127, 227, 240, .12); }
 .preset small { display: block; font-weight: 400; font-size: 11px; color: var(--faint); margin-top: 2px; }
 .preset-note { margin: 10px 0 0; color: var(--muted); font-size: 12.5px; min-height: 1.4em; }
 #builder-detail { margin-top: 12px; border-top: 1px solid var(--edge-soft); padding-top: 10px; }
@@ -352,11 +405,25 @@ button.ghost { padding: 11px 20px; color: var(--muted); }
 .army-col[data-side="1"] h3 input { color: var(--gaul); }
 .rows { display: flex; flex-direction: column; gap: 5px; }
 .brow { display: flex; align-items: center; gap: 5px; }
-.brow select { flex: 1 1 auto; min-width: 0; }
-.brow input { width: 46px; text-align: center; cursor: text; }
-.brow .x { padding: 4px 7px; color: var(--faint); }
+.brow select { flex: 1 1 auto; min-width: 84px; }
+.brow input { width: 56px; text-align: center; cursor: text; padding: 4px 3px; }
+.brow .x { padding: 4px 6px; color: var(--faint); flex: 0 0 auto; }
 .brow label { font-size: 10px; color: var(--faint); letter-spacing: .06em; }
-.add { margin-top: 6px; font-size: 12px; color: var(--muted); }
+/* The roster you pick a formation out of. Cards, because that is what this is. */
+.roster { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin-top: 8px; }
+.pick {
+  display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 6px 3px 5px; border-radius: 3px; text-align: center;
+}
+.pick svg { width: 18px; height: 18px; color: var(--bronze); display: block; }
+.pick b { font: 600 9.5px/1.1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .02em; }
+.pick:hover svg { color: var(--gold); }
+.roster-hint { margin: 10px 0 0; font-size: 11.5px; color: var(--faint); }
+.brow select.rar { flex: 0 0 100px; font-size: 11px; padding: 4px 4px; }
+.brow select.rar[data-rarity="uncommon"] { color: #7fc9a8; }
+.brow select.rar[data-rarity="rare"] { color: #5fd4e4; }
+.brow select.rar[data-rarity="epic"] { color: #b58ce8; }
+.brow select.rar[data-rarity="legendary"] { color: #ff8a6b; }
 .total { margin-top: 6px; font: 600 11.5px/1 ui-monospace, Menlo, monospace; color: var(--bronze); }
 .legend { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px 14px; }
 .legend .row { font-size: 11.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
@@ -364,22 +431,22 @@ button.ghost { padding: 11px 20px; color: var(--muted); }
 .legend .row .good { color: var(--good); }
 .legend .row .bad { color: var(--bad); }
 .legend .row svg { width: 16px; height: 16px; }
-.sheet-actions { display: flex; gap: 8px; margin-top: 16px; }
+.muster-actions { display: flex; gap: 8px; margin-top: 16px; }
 #builder-start {
-  font: 600 13px/1 inherit; color: #17130d; background: var(--gold);
-  border: 1px solid #f0cd85; padding: 10px 22px;
+  font: 600 13px/1 inherit; color: #06131a; background: var(--gold);
+  border: 1px solid #a9f0f8; padding: 10px 22px;
 }
-#builder-start:hover { background: #f0c87c; }
+#builder-start:hover { background: #a5eef8; }
 
 /* ── boot ────────────────────────────────────────────────────────────────── */
 #boot, #boot.fatal {
   position: fixed; z-index: 9; inset: 0; display: flex; flex-direction: column;
   align-items: center; justify-content: center; gap: 6px;
-  background: #0d0f0c; color: var(--muted); text-align: center; padding: 24px;
+  background: var(--depth-950); color: var(--muted); text-align: center; padding: 24px;
 }
 #boot p { margin: 0; }
 #boot .boot-sub { font-size: 11.5px; opacity: .6; }
-#boot.fatal { color: #ff8a72; font-family: ui-monospace, Menlo, monospace; }
+#boot.fatal { color: var(--coral); font-family: ui-monospace, Menlo, monospace; }
 #boot[hidden] { display: none; }
 
 @media (max-width: 1080px) {

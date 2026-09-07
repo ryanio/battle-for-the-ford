@@ -1,11 +1,15 @@
 /**
- * The army builder.
+ * The muster sheet: assembling a shoal out of a roster of cards.
  *
  * Two rules shaped it. A new player must never have to fill in a form before they can play, so the
- * game still boots straight into the classic scenario and the three presets are one click from
- * starting a battle. And anyone who does want to muster their own armies should be able to do it in
- * about fifteen seconds, so the detail is a row per formation — type, how many formations, how many
- * men in each — behind a disclosure triangle, and nothing else.
+ * game still boots straight into the reef pass and the three presets are one click from starting a
+ * battle. And anyone who does want to pick their own roster should be able to do it in about fifteen
+ * seconds, so it is a strip of cards to tap and a row per formation — type, rarity, how many
+ * formations, how many in each — behind a disclosure triangle, and nothing else.
+ *
+ * Rarity is on the row because rarity is load-bearing: a tier buys traits and traits move the same
+ * numbers everything else uses. It is the shape of a collection and none of the machinery — no
+ * wallet, no mint, no network. See A.RARITY in units.js.
  */
 ((A) => {
   const $ = (id) => document.getElementById(id);
@@ -38,12 +42,7 @@
         this.noteEl.textContent = A.PRESETS[this.presetName].note;
       });
 
-      for (const b of this.el.querySelectorAll(".add")) {
-        b.addEventListener("click", () => {
-          this.state.sides[Number(b.dataset.side)].push({ type: "sword", formations: 1, men: 40 });
-          this.render();
-        });
-      }
+      this.buildRosters();
       this.nameEls.forEach((el, side) => {
         el.addEventListener("input", () => {
           this.state.names[side] = el.value.slice(0, 18) || (side === 0 ? "Rome" : "Gauls");
@@ -98,10 +97,10 @@
           el.className = "brow";
           el.innerHTML =
             "<select></select>" +
+            '<select class="rar" aria-label="rarity"></select>' +
             '<input class="f" type="number" min="1" max="12" step="1" aria-label="formations">' +
             "<label>×</label>" +
-            '<input class="m" type="number" min="1" max="200" step="1" aria-label="men per formation">' +
-            "<label>men</label>" +
+            '<input class="m" type="number" min="1" max="200" step="1" aria-label="size">' +
             '<button class="x" type="button" aria-label="remove">✕</button>';
           const sel = el.querySelector("select");
           for (const t of A.TYPE_ORDER) {
@@ -114,6 +113,20 @@
           sel.addEventListener("change", () => {
             row.type = sel.value;
             row.men = A.TYPES[sel.value].men;
+            this.render();
+          });
+          const rar = el.querySelector(".rar");
+          for (const tier of A.RARITY) {
+            const o = document.createElement("option");
+            o.value = tier.key;
+            o.textContent = tier.label;
+            rar.appendChild(o);
+          }
+          rar.value = row.rarity || "common";
+          rar.dataset.rarity = rar.value;
+          rar.title = `${A.rarityOf(rar.value).traits} traits · attack and defence ×${A.rarityOf(rar.value).scale}`;
+          rar.addEventListener("change", () => {
+            row.rarity = rar.value;
             this.render();
           });
           const f = el.querySelector(".f");
@@ -147,11 +160,40 @@
         const rows = this.state.sides[side];
         const men = rows.reduce((n, r) => n + r.formations * r.men, 0);
         const forms = rows.reduce((n, r) => n + r.formations, 0);
-        this.totalEls[side].textContent = `${forms} formations · ${men} men`;
+        const traits = rows.reduce((n, r) => n + r.formations * A.rarityOf(r.rarity).traits, 0);
+        this.totalEls[side].textContent = `${forms} formations · ${men} strong · ${traits} traits`;
       }
     }
 
-    /** The whole triangle, on the page, so nobody has to guess what an ogre is for. */
+    /** Six cards a side. Tap one and it joins your line — that is the whole interaction. */
+    buildRosters() {
+      for (const host of this.el.querySelectorAll(".roster")) {
+        const side = Number(host.dataset.side);
+        host.innerHTML = "";
+        for (const t of A.TYPE_ORDER) {
+          const n = A.matchupNotes(t);
+          const b = document.createElement("button");
+          b.type = "button";
+          b.className = "pick";
+          b.dataset.type = t;
+          b.innerHTML = `${A.sigil(t)}<b></b>`;
+          b.querySelector("b").textContent = A.TYPES[t].label;
+          b.title = `${A.TYPES[t].blurb}\nBeats ${n.beats}, loses to ${n.losesTo}.`;
+          b.addEventListener("click", () => {
+            this.state.sides[side].push({
+              type: t,
+              formations: 1,
+              men: A.TYPES[t].men,
+              rarity: "common",
+            });
+            this.render();
+          });
+          host.appendChild(b);
+        }
+      }
+    }
+
+    /** The whole triangle, on the page, so nobody has to guess what a leviathan is for. */
     buildLegend() {
       const host = $("builder-legend");
       host.innerHTML = "";
@@ -205,7 +247,7 @@
       this.game.paused = false;
       const cfg = preset ? A.PRESETS[preset] : { names: this.state.names, sides: clone(this.state.sides) };
       this.game.startBattle({ ...cfg, seed: (Math.random() * 0xffffffff) >>> 0 });
-      this.game.hud.log(`${this.game.config.names[0]} take the field.`, "system");
+      this.game.hud.log(`${this.game.config.names[0]} take the water.`, "system");
       this.render();
     }
   };

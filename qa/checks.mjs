@@ -19,6 +19,7 @@ export const PANELS = [
   "#selinfo",
   "#minimap",
   "#log",
+  "#sheet",
 ];
 
 /** Text that has to stay on a single line. */
@@ -35,6 +36,7 @@ export const ONE_LINERS = [
   "#toast",
   ".card .name",
   ".card .count",
+  "#sheet .who",
 ];
 
 /**
@@ -73,8 +75,12 @@ export function overlappingPanels(page, selectors) {
 }
 
 /**
- * Text nodes that wrapped. A Range over a text node reports one client rect per line box, so more
- * than one rect means the browser broke the line.
+ * Text nodes that wrapped.
+ *
+ * A Range over a text node reports a rect per line-box fragment, but "fragment" is not the same as
+ * "line": `text-overflow: ellipsis` on a `nowrap` line splits the run into a visible part and the
+ * ellipsis and hands back two rects sitting at the same y. Counting distinct tops instead of
+ * counting rects is what separates a line that actually broke from one that was merely truncated.
  */
 export function wrappedText(page, selectors) {
   return page.eval((sels) => {
@@ -88,8 +94,11 @@ export function wrappedText(page, selectors) {
           if (node.nodeType !== 3 || !node.textContent.trim()) continue;
           const range = document.createRange();
           range.selectNodeContents(node);
-          const lines = range.getClientRects().length;
-          if (lines > 1) bad.push(`${sel} "${node.textContent.trim()}" wrapped onto ${lines} lines`);
+          const tops = new Set();
+          for (const r of range.getClientRects()) if (r.height > 0) tops.add(Math.round(r.top));
+          if (tops.size > 1) {
+            bad.push(`${sel} "${node.textContent.trim()}" wrapped onto ${tops.size} lines`);
+          }
         }
       }
     }

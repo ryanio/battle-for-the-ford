@@ -43,6 +43,8 @@ async function main() {
     await restartRebuilds(page, report, site);
     await responsiveLayout(page, report, site);
     await armyBuilder(page, report, site);
+    await collectibles(page, report, site);
+    await theWater(page, report, site);
   } catch (err) {
     report.check("harness ran to completion", false, err.stack || String(err));
     await page.shot("crash", out).catch(() => {});
@@ -567,6 +569,176 @@ async function main() {
       report.check(`score text stays on one line at ${w}×${h}`, wraps.length === 0, wraps.join("; "));
     }
     await page.setViewport(1280, 800);
+  }
+
+  /**
+   * The collectible layer has to be mechanically honest: a rarity tier must buy something that
+   * actually moves a number, and the trait sheet has to show what the formation really did.
+   */
+  async function collectibles(page, report, site) {
+    report.step("formations as collectibles");
+    await page.goto(`${site.origin}/index.html?seed=808`);
+    await sleep(500);
+
+    const tiers = await page.eval(() => {
+      const A = window.Anchor;
+      const g = A.game;
+      g.startBattle({
+        seed: 606,
+        names: ["A", "B"],
+        sides: [
+          [
+            { type: "sword", formations: 1, men: 40, rarity: "common" },
+            { type: "sword", formations: 1, men: 40, rarity: "rare" },
+            { type: "sword", formations: 1, men: 40, rarity: "legendary" },
+          ],
+          [{ type: "sword", formations: 1, men: 40, rarity: "common" }],
+        ],
+      });
+      return g.units
+        .filter((u) => u.side === 0)
+        .map((u) => ({
+          rarity: u.rarity,
+          traits: u.traits.length,
+          attack: u.def.attack,
+          defense: u.def.defense,
+        }));
+    });
+    const common = tiers.find((t) => t.rarity === "common");
+    const rare = tiers.find((t) => t.rarity === "rare");
+    const legendary = tiers.find((t) => t.rarity === "legendary");
+    report.check("a common formation rolls no traits", common.traits === 0, JSON.stringify(common));
+    report.check("a rare formation rolls two", rare.traits === 2, `${rare.traits} traits`);
+    report.check("a legendary formation rolls three", legendary.traits === 3, `${legendary.traits} traits`);
+    report.check(
+      "rarity moves real numbers, not just the label",
+      rare.attack > common.attack && legendary.attack > common.attack && legendary.defense > common.defense,
+      `attack ${common.attack.toFixed(2)} common, ${rare.attack.toFixed(2)} rare, ${legendary.attack.toFixed(2)} legendary`,
+    );
+    report.check(
+      "a higher tier never rolls fewer traits",
+      common.traits <= rare.traits && rare.traits <= legendary.traits,
+      `${common.traits} → ${rare.traits} → ${legendary.traits}`,
+    );
+    report.check(
+      "the same formation always rolls the same sheet",
+      await page.eval(() => {
+        const A = window.Anchor;
+        const a = A.rollTraits("sword", "epic", 4242).join(",");
+        const b = A.rollTraits("sword", "epic", 4242).join(",");
+        return a === b && a.length > 0;
+      }),
+    );
+
+    /*
+     * A golden outcome for the hand-placed scenario.
+     *
+     * This exists because of a bug that nothing else here would have caught: scattering marine snow
+     * out of the battle's own seeded RNG advanced it 4800 draws before a single formation was built,
+     * so every seeded battle came out different from the day the scenario was tuned — while every
+     * constant in the simulation was untouched. Decoration must not move the dice. If a change to
+     * the tuning is deliberate, update this number; if it moved on its own, something reached into
+     * the RNG stream that had no business there.
+     */
+    const golden = await page.eval(() => {
+      const g = window.Anchor.game;
+      g.startBattle({ preset: "classic", seed: 20260907 });
+      g.autoPlay = true;
+      g.paused = true;
+      for (let i = 0; i < 45 * 30; i++) g.step(1 / 30);
+      return [0, 1].map((s) => g.units.filter((u) => u.side === s).reduce((n, u) => n + u.alive, 0)).join(",");
+    });
+    report.equal("the seeded scenario plays out exactly as it always has", golden, "176,197");
+
+    // The classic scenario must be untouched by any of this.
+    const classic = await page.eval(() => {
+      const g = window.Anchor.game;
+      g.startBattle({ preset: "classic", seed: 20260907 });
+      return g.units.map((u) => ({ r: u.rarity, t: u.traits.length, a: u.def.attack }));
+    });
+    report.check(
+      "the hand-placed scenario is all common and carries no traits",
+      classic.every((u) => u.r === "common" && u.t === 0),
+      `${classic.filter((u) => u.t).length} formations with traits`,
+    );
+
+    // The sheet itself.
+    await page.eval(() => {
+      const g = window.Anchor.game;
+      g.select([g.units.find((u) => u.side === 0)]);
+      g.hud.sheetOpen = true;
+      g.hud.sheetSig = "";
+    });
+    await sleep(400);
+    const sheet = await page.eval(() => {
+      const el = document.getElementById("sheet");
+      if (!el || el.hidden) return { shown: false };
+      return {
+        shown: true,
+        name: el.querySelector(".who")?.textContent || "",
+        rarity: el.querySelector(".rarity")?.textContent || "",
+        rows: el.querySelectorAll(".record div").length,
+        hasSigil: !!el.querySelector(".sigil svg"),
+      };
+    });
+    report.check("selecting a formation shows its card", sheet.shown === true);
+    report.check("the card names the formation and its tier", !!sheet.name && !!sheet.rarity, `${sheet.name} · ${sheet.rarity}`);
+    report.check("the card carries a record of this battle", sheet.rows >= 4, `${sheet.rows} record rows`);
+    report.check("the card carries a type sigil", sheet.hasSigil === true);
+    await page.shot("14-trait-sheet", out);
+    await auditLayout(page, report, "with a formation's card open");
+
+    // Picking from the roster is how you build a shoal.
+    await page.clickSelector("#newgame");
+    await sleep(250);
+    await page.eval(() => {
+      document.getElementById("builder-detail").open = true;
+      window.Anchor.builder.set({ sides: [[{ type: "sword", formations: 1, men: 40 }], [{ type: "sword", formations: 1, men: 40 }]] });
+    });
+    await sleep(200);
+    const before = await page.eval(() => window.Anchor.builder.config().sides[0].length);
+    await page.clickSelector('.roster[data-side="0"] .pick[data-type="ogre"]');
+    await sleep(200);
+    const after = await page.eval(() => window.Anchor.builder.config().sides[0]);
+    report.check(
+      "tapping a roster card adds that formation",
+      after.length === before + 1 && after[after.length - 1].type === "ogre",
+      JSON.stringify(after),
+    );
+    await page.shot("15-roster", out);
+    await auditLayout(page, report, "with the roster open");
+    await page.clickSelector("#builder-cancel");
+    await sleep(200);
+  }
+
+  /** The re-theme is not only paint: there is water in the scene, and it moves. */
+  async function theWater(page, report, site) {
+    report.step("the water");
+    await page.goto(`${site.origin}/index.html?seed=77&t=20`);
+    await sleep(700);
+    const first = await page.eval(() => {
+      const g = window.Anchor.game;
+      return {
+        caustics: g.caustics.length,
+        offset: g.caustics[0].map.offset.x,
+        snow: g.snow.geometry.attributes.position.count,
+        snowY: g.snow.geometry.attributes.position.array[1],
+        fogNear: g.scene.fog.near,
+        fogColor: g.scene.fog.color.getHexString(),
+      };
+    });
+    report.check("caustics are cast on the seabed", first.caustics >= 2, `${first.caustics} layers`);
+    report.check("marine snow drifts through the column", first.snow > 500, `${first.snow} motes`);
+    report.check("the water eats distance", first.fogNear < 150, `fog from ${first.fogNear}m, #${first.fogColor}`);
+    await sleep(1000);
+    const later = await page.eval(() => {
+      const g = window.Anchor.game;
+      return { offset: g.caustics[0].map.offset.x, snowY: g.snow.geometry.attributes.position.array[1] };
+    });
+    report.check("the caustics move", Math.abs(later.offset - first.offset) > 1e-4);
+    report.check("the snow falls", Math.abs(later.snowY - first.snowY) > 0.05);
+    await page.shot("16-underwater", out);
+    auditConsole(page, report, "underwater");
   }
 
   async function armyBuilder(page, report, site) {

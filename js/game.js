@@ -1,9 +1,9 @@
 /**
- * Battle for the Ford — one engagement, two armies, no campaign map.
+ * Battle for the Reef Pass — one engagement, two shoals, no campaign map.
  *
- * The scenario is stacked on purpose: Rome fields fewer men in the line but twice the cavalry, so
- * winning means pinning the Gallic warbands with the hastati and then taking them in the back with
- * the equites. Fight it as a shoving match and you lose on numbers.
+ * The scenario is stacked on purpose: the Coral Court fields fewer bodies in the line but twice the
+ * rays, so winning means pinning the Tide's shell warbands with the reef guard and then taking them
+ * in the back with the riders. Fight it as a shoving match and you lose on numbers.
  *
  * URL parameters, mostly for taking honest screenshots of a battle in progress:
  *   ?seed=123   pick the battlefield and the dice
@@ -13,25 +13,26 @@
  */
 ((A) => {
   const ROSTER = [
-    // Rome deploys the classic three lines squeezed into one: hastati across the front, the
-    // triarii held back as a reserve, and the horse out on both wings where it belongs.
-    { side: 0, type: "sword", name: "Hastati I", x: -13, z: -34 },
-    { side: 0, type: "sword", name: "Hastati II", x: 0, z: -34 },
-    { side: 0, type: "sword", name: "Principes", x: 13, z: -34 },
-    { side: 0, type: "spear", name: "Triarii", x: 0, z: -48 },
-    { side: 0, type: "cavalry", name: "Equites I", x: -32, z: -29 },
-    { side: 0, type: "cavalry", name: "Equites II", x: 32, z: -29 },
+    // The Court deploys three shell lines squeezed into one: reef guard across the front, the
+    // urchins held back as a reserve, and the rays out on both wings where they belong.
+    { side: 0, type: "sword", name: "Reef Guard I", x: -13, z: -34 },
+    { side: 0, type: "sword", name: "Reef Guard II", x: 0, z: -34 },
+    { side: 0, type: "sword", name: "Shield Coral", x: 13, z: -34 },
+    { side: 0, type: "spear", name: "Urchin Wall", x: 0, z: -48 },
+    { side: 0, type: "cavalry", name: "Ray Riders I", x: -32, z: -29 },
+    { side: 0, type: "cavalry", name: "Ray Riders II", x: 32, z: -29 },
 
-    // The Gauls have a wider line and more of it, which is the problem the player has to solve.
-    { side: 1, type: "sword", name: "Warband I", x: -19, z: 34 },
-    { side: 1, type: "sword", name: "Warband II", x: -6, z: 34 },
-    { side: 1, type: "sword", name: "Warband III", x: 7, z: 34 },
-    { side: 1, type: "sword", name: "Warband IV", x: 20, z: 34 },
-    { side: 1, type: "spear", name: "Gaesatae", x: 0, z: 47 },
-    { side: 1, type: "cavalry", name: "Gallic Horse", x: -40, z: 29 },
+    // The Tide has a wider line and more of it, which is the problem the player has to solve.
+    { side: 1, type: "sword", name: "Shell Warband I", x: -19, z: 34 },
+    { side: 1, type: "sword", name: "Shell Warband II", x: -6, z: 34 },
+    { side: 1, type: "sword", name: "Shell Warband III", x: 7, z: 34 },
+    { side: 1, type: "sword", name: "Shell Warband IV", x: 20, z: 34 },
+    { side: 1, type: "spear", name: "Spinefront", x: 0, z: 47 },
+    { side: 1, type: "cavalry", name: "Skate Riders", x: -40, z: 29 },
   ];
 
-  const LIVERY = [0xc0392b, 0x3a6ea5];
+  // Coral against current — the reef pairing the Anchor palette is built on.
+  const LIVERY = [0xff8a6b, 0x3fb6cc];
 
   /** What a formation of each type is called, per side. Numerals get appended when there is more. */
   const NAMES = [
@@ -67,7 +68,11 @@
       for (const r of rows) {
         const n = A.clamp(Math.round(r.formations || 1), 1, 12);
         for (let i = 0; i < n; i++) {
-          blocks.push({ type: r.type, men: A.clamp(Math.round(r.men || A.TYPES[r.type].men), 1, 200) });
+          blocks.push({
+            type: r.type,
+            men: A.clamp(Math.round(r.men || A.TYPES[r.type].men), 1, 200),
+            rarity: r.rarity || "common",
+          });
         }
       }
       if (!blocks.length) blocks.push({ type: "sword", men: 40 });
@@ -128,6 +133,7 @@
           type: b.type,
           name: b.name,
           men: b.men,
+          rarity: b.rarity,
           x: A.clamp(b.x, -108, 108),
           z: b.z,
         });
@@ -143,14 +149,14 @@
   A.PRESETS = {
     classic: {
       label: "Classic",
-      names: ["Rome", "Gauls"],
-      note: "Rome is outnumbered in the line and has twice the horse. Pin, then flank.",
+      names: ["Coral Court", "Abyssal Tide"],
+      note: "The Court is outnumbered in the line and has twice the rays. Pin, then flank.",
       roster: ROSTER,
     },
     horde: {
       label: "Horde",
-      names: ["The Legion", "The Risen"],
-      note: "The dead do not rout. Flanking buys damage and nothing else — you have to kill them all.",
+      names: ["Reef Watch", "The Sunken"],
+      note: "The drowned do not rout. Flanking buys damage and nothing else — you have to kill them all.",
       sides: [
         [
           { type: "spear", formations: 2, men: 40 },
@@ -162,8 +168,8 @@
     },
     monsters: {
       label: "Monsters",
-      names: ["The Warband", "The Deep Wood"],
-      note: "Six ogres hit like sixty men and cannot hold a frontage. Everything here punches holes.",
+      names: ["Coral Titans", "The Trench"],
+      note: "Six leviathans hit like sixty and cannot hold a frontage. Everything here punches holes.",
       sides: [
         [
           { type: "ogre", formations: 2, men: 6 },
@@ -184,7 +190,7 @@
     const preset = typeof cfg === "string" ? A.PRESETS[cfg] : null;
     const c = preset || cfg || A.PRESETS.classic;
     return {
-      names: c.names || ["Rome", "Gauls"],
+      names: c.names || ["Coral Court", "Abyssal Tide"],
       note: c.note || "",
       roster: c.roster || deploy(c.sides),
       sides: c.sides || null,
@@ -250,18 +256,22 @@
     build() {
       this.rng = A.makeRng(this.seed);
       this.scene = new THREE.Scene();
-      this.scene.fog = new THREE.Fog(0xc9c9b6, 290, 760);
+      // Water eats distance. The short, blue-green fog is doing most of the work of "this is under
+      // the sea" before a single caustic is drawn.
+      this.scene.fog = new THREE.Fog(0x0c3241, 70, 390);
 
       this.scene.add(this.sky());
-      // A low, raking sun: gentle hills only read as hills if something is shading their far side.
-      const hemi = new THREE.HemisphereLight(0xbcd4e8, 0x4b5326, 1.05);
+      // Light from above and behind, the way it arrives underwater: a broad cold ambient off the
+      // surface, and one shafted key so a reef shelf still shades its own far side.
+      const hemi = new THREE.HemisphereLight(0x8fd8e8, 0x0e2b30, 1.15);
       this.scene.add(hemi);
-      const sun = new THREE.DirectionalLight(0xffeecb, 2.6);
-      sun.position.set(-120, 62, 48);
+      const sun = new THREE.DirectionalLight(0xd6f2fb, 2.2);
+      sun.position.set(-90, 130, 40);
       this.scene.add(sun);
 
       this.terrain = new A.Terrain(this.rng);
       this.terrain.build(this.scene, this.rng);
+      this.buildWater();
 
       this.units = this.config.roster.map(
         (spec) =>
@@ -270,6 +280,8 @@
             type: spec.type,
             name: spec.name,
             men: spec.men,
+            rarity: spec.rarity,
+            salt: this.seed + spec.side * 977 + spec.x * 31 + spec.z,
             livery: LIVERY[spec.side],
             x: spec.x,
             z: spec.z,
@@ -297,16 +309,22 @@
       );
     }
 
-    /** A gradient dome. Cheaper and calmer than a skybox, and it sets the whole colour key. */
+    /**
+     * The water column. Same gradient dome as before, read upside down: near-black in the deep
+     * below, opening out to a lit surface overhead. It sets the whole colour key.
+     */
     sky() {
       const g = new THREE.SphereGeometry(620, 20, 14);
       const pos = g.attributes.position;
       const col = new Float32Array(pos.count * 3);
-      const low = new THREE.Color(0xdcd0b0);
-      const high = new THREE.Color(0x5d86b3);
+      const deep = new THREE.Color(0x06131a);
+      const mid = new THREE.Color(0x11485c);
+      const surface = new THREE.Color(0x74cede);
       const c = new THREE.Color();
       for (let i = 0; i < pos.count; i++) {
-        c.copy(low).lerp(high, A.clamp(pos.getY(i) / 380 + 0.08, 0, 1));
+        const t = A.clamp(pos.getY(i) / 420 + 0.34, 0, 1);
+        c.copy(deep).lerp(mid, A.clamp(t * 1.8, 0, 1));
+        if (t > 0.62) c.lerp(surface, (t - 0.62) / 0.38);
         col[i * 3] = c.r;
         col[i * 3 + 1] = c.g;
         col[i * 3 + 2] = c.b;
@@ -323,6 +341,88 @@
       );
       m.renderOrder = -1;
       return m;
+    }
+
+    /**
+     * Caustics and marine snow.
+     *
+     * The caustics are two copies of the seabed itself, lifted a few centimetres and drawn additive
+     * with the tiling caustic web on them at different scales, crawling in different directions.
+     * Because they *are* the terrain geometry they follow every shelf and hollow exactly, which a
+     * flat projected plane does not. The snow is a few thousand points drifting down through the
+     * column — it costs nothing and it is what stops the water reading as fog.
+     */
+    buildWater() {
+      const caustic = A.causticTexture();
+      this.caustics = [];
+      for (const [i, layer] of [
+        { repeat: 11, speed: [0.011, 0.007], opacity: 0.2, color: 0x9fe0ea },
+        { repeat: 6.5, speed: [-0.006, 0.009], opacity: 0.12, color: 0x6fc6dc },
+      ].entries()) {
+        const map = caustic.clone();
+        map.needsUpdate = true;
+        map.wrapS = THREE.RepeatWrapping;
+        map.wrapT = THREE.RepeatWrapping;
+        map.repeat.set(layer.repeat, layer.repeat);
+        const mesh = new THREE.Mesh(
+          this.terrain.mesh.geometry,
+          new THREE.MeshBasicMaterial({
+            map,
+            color: layer.color,
+            transparent: true,
+            opacity: layer.opacity,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            fog: true,
+          }),
+        );
+        mesh.position.y = 0.05 + i * 0.02;
+        mesh.renderOrder = 2;
+        this.scene.add(mesh);
+        this.caustics.push({ mesh, map, speed: layer.speed });
+      }
+
+      // Its own stream, deliberately. Scattering 1600 motes out of the battle's RNG would advance
+      // it 4800 draws before a single formation was built, and every seeded battle would come out
+      // different from the day the scenario was tuned. Decoration must not move the dice.
+      const rng = A.makeRng((this.seed ^ 0x5eaf00d) >>> 0);
+      const N = 1600;
+      const pts = new Float32Array(N * 3);
+      for (let i = 0; i < N; i++) {
+        pts[i * 3] = rng.range(-170, 170);
+        pts[i * 3 + 1] = rng.range(1, 64);
+        pts[i * 3 + 2] = rng.range(-150, 150);
+      }
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute("position", new THREE.BufferAttribute(pts, 3));
+      this.snow = new THREE.Points(
+        geo,
+        new THREE.PointsMaterial({
+          color: 0xcdeef6,
+          size: 0.42,
+          sizeAttenuation: true,
+          transparent: true,
+          opacity: 0.55,
+          depthWrite: false,
+        }),
+      );
+      this.snow.frustumCulled = false;
+      this.scene.add(this.snow);
+    }
+
+    updateWater(dt, now) {
+      for (const c of this.caustics) {
+        c.map.offset.x += c.speed[0] * dt;
+        c.map.offset.y += c.speed[1] * dt;
+      }
+      const p = this.snow.geometry.attributes.position;
+      const a = p.array;
+      for (let i = 0; i < a.length; i += 3) {
+        a[i] += Math.sin(now * 0.3 + a[i + 1] * 0.2) * 0.28 * dt;
+        a[i + 1] -= 0.55 * dt;
+        if (a[i + 1] < 0.5) a[i + 1] = 64;
+      }
+      p.needsUpdate = true;
     }
 
     buildCorpses() {
@@ -357,7 +457,7 @@
 
     buildPings() {
       const mat = new THREE.MeshBasicMaterial({
-        color: 0xe0b566,
+        color: 0x7fe3f0,
         transparent: true,
         opacity: 0,
         depthTest: false,
@@ -434,7 +534,9 @@
     }
 
     onRout(u) {
-      this.hud.log(`${u.name} breaks and runs!`, u.side === 0 ? "bad" : "good");
+      u.record.broke = true;
+      for (const a of u.attackers) a.record.brokeEnemies++;
+      this.hud.log(`${u.name} breaks and scatters!`, u.side === 0 ? "bad" : "good");
       this.hud.shout(u.name, u.side === 0);
       if (A.coach) A.coach.onRout(u);
     }
@@ -498,8 +600,8 @@
       this.hud.showResult(
         won,
         won
-          ? `${theirs} are broken. ${survivors} of ${this.startingMen[0]} still stand in formation.`
-          : `The line of ${mine} has given way. What is left of it is running for the trees.`,
+          ? `${theirs} are broken. ${survivors} of ${this.startingMen[0]} still hold formation.`
+          : `The line of ${mine} has given way. What is left of it is scattering into the deep.`,
       );
     }
 
@@ -519,6 +621,12 @@
         u.outline.traverse((o) => o.geometry?.dispose());
       }
       for (const m of this.corpses) m.dispose();
+      for (const c of this.caustics) {
+        c.map.dispose();
+        c.mesh.material.dispose();
+      }
+      this.snow.geometry.dispose();
+      this.snow.material.dispose();
       this.terrain.mesh.geometry.dispose();
       this.terrain.trees.dispose();
       this.terrain.trees.geometry.dispose();
@@ -541,7 +649,7 @@
     restart() {
       this.seed = (this.seed * 1103515245 + 12345) >>> 0;
       this.startBattle(null);
-      this.hud.log("A new field, a new battle.", "system");
+      this.hud.log("A new reef, a new battle.", "system");
     }
 
     // ── frame ──────────────────────────────────────────────────────────────
@@ -560,6 +668,7 @@
       this.controls.update(dt);
       if (!this.paused) this.step(dt);
       this.updatePings(dt);
+      this.updateWater(dt, this.time);
       this.hud.update(this.time, dt);
       if (A.coach) A.coach.update(this, dt);
       this.renderer.render(this.scene, this.camera);

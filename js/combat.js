@@ -129,7 +129,9 @@
         }
         const hA = game.terrain.heightAt(a.pos.x, a.pos.z);
         const hB = game.terrain.heightAt(b.pos.x, b.pos.z);
-        const ground = 1 + A.clamp((hA - hB) * 0.14, -0.28, 0.28);
+        // Depth still cuts both ways — it just reads as sitting on a reef shelf rather than a hill.
+        const ground =
+          a.def.ignoreGround || b.def.ignoreGround ? 1 : 1 + A.clamp((hA - hB) * 0.14, -0.28, 0.28);
         const chasing = b.state === "routing" ? 3.0 : 1;
         const defense = b.def.defense * (b.state === "routing" ? 0.6 : 1);
 
@@ -150,6 +152,7 @@
         while (b.killAccum >= 1) {
           b.killAccum -= 1;
           b.killNearest(a.pos.x, a.pos.z, now);
+          a.record.kills++;
           if (b.state === "gone") break;
         }
 
@@ -161,6 +164,8 @@
         // Say it out loud. A flank that is not announced is a number nobody ever sees.
         if (tier > 0 && n >= 3 && now - (b.lastCallAt || -9) > 1.6) {
           b.lastCallAt = now;
+          if (tier >= REAR_TIER) a.record.rears++;
+          else a.record.flanks++;
           b.hitCalls.push({
             tier,
             mult: 1 + tier,

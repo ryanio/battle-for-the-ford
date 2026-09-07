@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Anchor — Battle for the Ford</title>
-<meta name="description" content="A small Total War: Rome-inspired real-time battle, played in formations. Flank or be flanked.">
+<title>Anchor — Battle for the Reef Pass</title>
+<meta name="description" content="A real-time reef battle played in formations. Two shoals, one pass. Flank or be flanked.">
 <link rel="stylesheet" href="./style.css">
 </head>
 <body>
@@ -28,7 +28,7 @@
   <div class="centre">
     <div class="scores">
       <div class="army" data-side="0">
-        <span class="army-name" id="name0">Rome</span>
+        <span class="army-name" id="name0">Coral Court</span>
         <div class="bar"><i id="bar0"></i></div>
         <span class="army-men" id="men0">—</span>
       </div>
@@ -36,7 +36,7 @@
       <div class="army" data-side="1">
         <span class="army-men" id="men1">—</span>
         <div class="bar"><i id="bar1"></i></div>
-        <span class="army-name" id="name1">Gauls</span>
+        <span class="army-name" id="name1">Abyssal Tide</span>
       </div>
     </div>
     <div id="stack">
@@ -58,6 +58,7 @@
         <tr><th><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></th><td>pan · screen edge pans too</td></tr>
         <tr><th><kbd>Q</kbd><kbd>E</kbd></th><td>rotate · <kbd>wheel</kbd> zoom</td></tr>
         <tr><th><kbd>Space</kbd></th><td>pause · <kbd>Tab</kbd> select all</td></tr>
+        <tr><th><kbd>C</kbd></th><td>the selected formation's card — rarity, traits, record</td></tr>
       </table>
     </aside>
   </div>
@@ -72,6 +73,8 @@
   <div id="minimap"><canvas id="minimap-canvas" width="300" height="252"></canvas></div>
 </footer>
 
+<aside id="sheet" hidden></aside>
+
 <div id="shout" hidden></div>
 
 <div id="result" hidden>
@@ -84,8 +87,8 @@
 </div>
 
 <div id="builder" hidden>
-  <div class="sheet">
-    <h2>Muster the armies</h2>
+  <div class="muster">
+    <h2>Muster the shoals</h2>
     <div class="presets">
       <button class="preset" type="button" data-preset="classic"></button>
       <button class="preset" type="button" data-preset="horde"></button>
@@ -93,24 +96,25 @@
     </div>
     <p class="preset-note" id="builder-note"></p>
     <details id="builder-detail">
-      <summary>Or muster them yourself</summary>
+      <summary>Or pick the roster yourself</summary>
       <div class="armies">
         <div class="army-col" data-side="0">
-          <h3><input id="builder-name0" type="text" maxlength="18" aria-label="First army name"></h3>
+          <h3><input id="builder-name0" type="text" maxlength="18" aria-label="First shoal name"></h3>
           <div class="rows" id="builder-rows0"></div>
-          <button class="add" type="button" data-side="0">+ formation</button>
+          <div class="roster" data-side="0"></div>
           <div class="total" id="builder-total0"></div>
         </div>
         <div class="army-col" data-side="1">
-          <h3><input id="builder-name1" type="text" maxlength="18" aria-label="Second army name"></h3>
+          <h3><input id="builder-name1" type="text" maxlength="18" aria-label="Second shoal name"></h3>
           <div class="rows" id="builder-rows1"></div>
-          <button class="add" type="button" data-side="1">+ formation</button>
+          <div class="roster" data-side="1"></div>
           <div class="total" id="builder-total1"></div>
         </div>
       </div>
+      <p class="roster-hint">Tap a card to add a formation. Rarity buys traits, and traits change the numbers.</p>
       <div class="legend" id="builder-legend"></div>
     </details>
-    <div class="sheet-actions">
+    <div class="muster-actions">
       <button id="builder-start" type="button">Begin the battle</button>
       <button id="builder-cancel" type="button" class="ghost">Back</button>
     </div>
@@ -118,7 +122,7 @@
 </div>
 
 <div id="boot">
-  <p>Mustering the legion…</p>
+  <p>Mustering the shoal…</p>
   <p class="boot-sub">loading three.js from cdnjs</p>
 </div>
 

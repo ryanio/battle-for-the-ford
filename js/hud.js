@@ -7,7 +7,8 @@
  * whole line without looking away from the field, and a break is telegraphed rather than surprising.
  *
  * Everything here is read-only reporting on the simulation, with one exception: clicking a card
- * selects that formation, which is how most orders actually get given.
+ * selects that formation, which is how most orders actually get given. Clicking its sigil opens the
+ * formation's own card — rarity, traits, and what it has done in this battle.
  */
 ((A) => {
   const $ = (id) => document.getElementById(id);
@@ -37,6 +38,9 @@
     constructor(game) {
       this.game = game;
       this.markers = $("markers");
+      this.sheetEl = $("sheet");
+      this.sheetOpen = true;
+      this.sheetSig = "";
       this.commandEl = $("command");
       this.selinfoEl = $("selinfo");
       this.logEl = $("log");
@@ -70,6 +74,10 @@
       addEventListener("keydown", (e) => {
         if (A.typingInAField(e.target)) return;
         if (e.key === "?" || (e.key === "/" && e.shiftKey) || e.key === "h") toggle.click();
+        if (e.key === "c" || e.key === "C") {
+          this.sheetOpen = !this.sheetOpen;
+          this.sheetSig = "";
+        }
       });
 
       this.commandEl.addEventListener("click", (e) => {
@@ -77,6 +85,8 @@
         if (!card) return;
         const unit = game.units.find((u) => String(u.id) === card.dataset.id);
         if (!unit || unit.state === "gone") return;
+        // Clicking the sigil opens the formation's card rather than just selecting it.
+        if (e.target.closest(".sigil")) this.sheetOpen = true;
         game.select(e.shiftKey ? game.selected.concat([unit]) : [unit]);
       });
     }
@@ -95,6 +105,8 @@
       this.resultEl.className = "";
       this.shoutEl.hidden = true;
       this.toastEl.hidden = true;
+      this.sheetEl.hidden = true;
+      this.sheetSig = "";
     }
 
     armiesChanged(names) {
@@ -172,6 +184,7 @@
       this.updateMarkers();
       this.updateCommandBar();
       this.updateSelection();
+      this.updateSheet();
       this.drawMinimap();
     }
 
@@ -238,8 +251,8 @@
           u.state === "routing"
             ? "#ff6a4d"
             : u.side === 0
-              ? `hsl(${(10 + u.morale * 0.28).toFixed(0)}, 72%, 55%)`
-              : `hsl(${(212 - (100 - u.morale) * 0.9).toFixed(0)}, 62%, 58%)`;
+              ? `hsl(${(8 + u.morale * 0.16).toFixed(0)}, 88%, 66%)`
+              : `hsl(${(188 - (100 - u.morale) * 1.6).toFixed(0)}, 70%, 60%)`;
         el.lastChild.textContent = u.state === "routing" ? "ROUTING" : "";
       }
     }
@@ -255,12 +268,13 @@
         el.className = "card";
         el.dataset.id = String(u.id);
         el.dataset.side = String(u.side);
+        el.dataset.rarity = u.rarity;
         el.innerHTML =
           `<span class="sigil">${A.sigil(u.type)}</span>` +
           '<span class="count"></span><span class="name"></span>' +
           '<span class="strength"><i></i></span><span class="nerve"><i></i></span><span class="tag" hidden></span>';
         el.querySelector(".name").textContent = u.name;
-        el.title = `${u.name} — ${A.TYPES[u.type].label}`;
+        el.title = `${u.name} — ${A.rarityOf(u.rarity).label} ${A.TYPES[u.type].label}`;
         this.commandEl.appendChild(el);
         this.cards.set(u, el);
       }
@@ -359,6 +373,50 @@
       verdict.className = `verdict ${cls}`;
     }
 
+    /**
+     * The trait sheet: one formation as a collectible card — what it is, what tier it rolled, the
+     * traits that tier bought it, and what it has actually done today. The record is the point. A
+     * collectible with no provenance is a sticker, and the provenance here is the battle you are in.
+     */
+    updateSheet() {
+      const sel = this.game.selected;
+      const u = sel.length === 1 ? sel[0] : null;
+      if (!u || !this.sheetOpen) {
+        this.sheetEl.hidden = true;
+        this.sheetSig = "";
+        return;
+      }
+      const s = u.sheet;
+      const sig = `${u.id}:${s.record.kills}:${s.record.flanks}:${s.record.rears}:${s.record.brokeEnemies}:${u.alive}`;
+      if (sig === this.sheetSig) return;
+      this.sheetSig = sig;
+      this.sheetEl.hidden = false;
+      this.sheetEl.style.setProperty("--rare", s.rarity.tint);
+
+      const notes = A.matchupNotes(u.type);
+      const traits = s.traits.length
+        ? s.traits.map((t) => `<div class="trait"><b>${t.label}</b><span>${t.note}</span></div>`).join("")
+        : '<div class="none">No traits. Common formations fight on their stat line alone.</div>';
+      this.sheetEl.innerHTML =
+        `<div class="head"><span class="sigil">${A.sigil(u.type)}</span>` +
+        `<div><div class="who"></div><div class="kind"><span class="rarity"></span> · <span class="tl"></span></div></div></div>` +
+        `<div class="traits">${traits}</div>` +
+        '<div class="record">' +
+        `<div><span>killed</span><b>${s.record.kills}</b></div>` +
+        `<div><span>strength</span><b>${s.alive}/${s.initial}</b></div>` +
+        `<div><span>flanks</span><b>${s.record.flanks}</b></div>` +
+        `<div><span>rear hits</span><b>${s.record.rears}</b></div>` +
+        `<div><span>broke</span><b>${s.record.brokeEnemies}</b></div>` +
+        `<div><span>own nerve</span><b>${u.def.fearless ? "—" : `${Math.round(u.morale)}%`}</b></div>` +
+        "</div>" +
+        '<div class="vs">beats <b></b> · loses to <s></s></div>';
+      this.sheetEl.querySelector(".who").textContent = s.name;
+      this.sheetEl.querySelector(".rarity").textContent = s.rarity.label;
+      this.sheetEl.querySelector(".tl").textContent = s.typeLabel;
+      this.sheetEl.querySelector(".vs b").textContent = notes.beats;
+      this.sheetEl.querySelector(".vs s").textContent = notes.losesTo;
+    }
+
     /** A cheap tactical overview: where both lines are, and where the camera is looking. */
     drawMinimap() {
       const ctx = this.mctx;
@@ -374,13 +432,13 @@
       const toY = (z) => H / 2 - z * sz;
 
       ctx.clearRect(0, 0, W, H);
-      ctx.fillStyle = "#232a1a";
+      ctx.fillStyle = "#0a2028";
       ctx.fillRect(0, 0, W, H);
-      ctx.strokeStyle = "rgba(196,155,86,0.22)";
+      ctx.strokeStyle = "rgba(95,212,228,0.24)";
       ctx.lineWidth = 2;
       ctx.strokeRect(toX(-t.width / 2), toY(t.depth / 2), t.width * sx, t.depth * sz);
-      ctx.fillStyle = "rgba(120,150,190,0.10)";
-      ctx.fillRect(toX(-t.width / 2), toY(9), t.width * sx, 18 * sz); // the ford
+      ctx.fillStyle = "rgba(95,212,228,0.10)";
+      ctx.fillRect(toX(-t.width / 2), toY(9), t.width * sx, 18 * sz); // the pass
 
       for (const u of g.units) {
         if (u.state === "gone") continue;
@@ -388,7 +446,7 @@
         ctx.fillStyle = u.state === "routing" ? "#8a5a4a" : u.side === 0 ? "#e2694f" : "#5f96d8";
         ctx.fillRect(toX(u.pos.x) - s / 2, toY(u.pos.z) - s / 4, s, Math.max(3, s / 2));
         if (u.selected) {
-          ctx.strokeStyle = "#e5bd72";
+          ctx.strokeStyle = "#7fe3f0";
           ctx.lineWidth = 2;
           ctx.strokeRect(toX(u.pos.x) - s / 2 - 2, toY(u.pos.z) - s / 4 - 2, s + 4, Math.max(3, s / 2) + 4);
         }
@@ -396,7 +454,7 @@
 
       const cam = g.controls;
       if (cam) {
-        ctx.strokeStyle = "rgba(245,235,210,0.6)";
+        ctx.strokeStyle = "rgba(220,245,250,0.55)";
         ctx.lineWidth = 2;
         const r = cam.dist * 0.42;
         ctx.strokeRect(toX(cam.target.x - r), toY(cam.target.z + r * 0.7), r * 2 * sx, r * 1.4 * sz);

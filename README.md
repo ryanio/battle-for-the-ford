@@ -164,13 +164,19 @@ during development: module-level `new THREE.Matrix4()` scratch objects ran befor
 ## Development
 
 ```bash
-npx biome check .     # lint and format
+npx --yes @biomejs/biome@2.5.12 check .   # lint and format — the same pin CI uses
 python3 -m http.server -d . 8000
 node qa/play.mjs      # play the game headlessly and assert on what happens
 node qa/balance.mjs   # win rates across seeds, for tuning
 ```
 
 Or just open `index.html`.
+
+The linter is spelled out in full on purpose. There is no `package.json` here, so bare `npx biome`
+resolves to [`biome`](https://www.npmjs.com/package/biome) — an unrelated 0.3.3 package for managing
+environment variables, which lints nothing and exits 0. A local "lint passed" that came from a
+different program is worse than no lint at all. `@biomejs/biome@2.5.12` is what CI runs; run the same
+thing.
 
 `noAssignInExpressions` is disabled in `biome.json`: every file uses the
 `(window.Anchor = window.Anchor || {})` namespace idiom, which is the whole point of the

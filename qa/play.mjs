@@ -508,18 +508,33 @@ async function main() {
 
   async function restartRebuilds(page, report, site) {
     report.step("the restart button rebuilds a fresh battle");
-    // Let the AI command both sides and run the battle out. Stepping it here rather than trusting
-    // a fixed ?t= means a stubborn seed cannot leave the assertion hanging: the check is about the
-    // result screen, not about how long a particular field takes to decide.
-    await page.goto(`${site.origin}/index.html?auto=1&seed=4`);
+    // Let the AI command both sides and run the battle out on the seed players actually get.
+    //
+    // Pausing is not enough to make this reproducible: `loop()` steps the sim with real-clock dt
+    // from the moment the page loads until this eval runs, so the fixed-step loop below used to
+    // start from however far a given machine had got — and a melee integrated at different dt does
+    // not come out the same. The same seed decided at 68s, 74s, 72s and 61s here purely by varying
+    // the wall-clock delay before pausing. Rebuilding from the seed while paused throws that drift
+    // away: `startBattle(null)` re-seeds the rng, resets the clock and rebuilds the roster, so every
+    // machine steps the identical battle.
+    await page.goto(`${site.origin}/index.html?auto=1`);
     const fought = await page.eval(() => {
       const g = window.Anchor.game;
       g.autoPlay = true;
-      g.paused = true; // take the clock off the render loop so this is reproducible
+      g.paused = true; // take the clock off the render loop
+      g.startBattle(null); // and discard whatever it stepped before we got here
       for (let i = 0; i < 900 * 30 && !g.over; i++) g.step(1 / 30);
       return { over: g.over, time: Math.round(g.time) };
     });
     report.check("a battle run out with the AI on both sides decides", fought.over === true, `after ${fought.time}s`);
+    // A decision at 890s is a stalemate that happened to end, not a battle. Two formations meeting
+    // at a corner grind 1-2 men at a time and neither breaks — see the seed 4 standoff in #3 — and
+    // that reads as a pass if the only assertion is "it finished eventually".
+    report.check(
+      "and decides in a plausible span, not by grinding to the budget",
+      fought.over === true && fought.time < 600,
+      `${fought.time}s of a 900s budget`,
+    );
     await page.waitFor(() => !document.getElementById("result").hidden, 8000, "the result screen");
     await sleep(500);
     const over = await page.eval(() => {
